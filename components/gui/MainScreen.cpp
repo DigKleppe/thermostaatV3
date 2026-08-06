@@ -123,7 +123,8 @@ MainScreen::MainScreen() {
 
 		lv_coord_t h = lv_obj_get_height(cb[n]);
 
-		lv_obj_set_pos(cb[n], 30, n * (h + PADDING) + 275);
+		// lv_obj_set_pos(cb[n], 30, n * (h + PADDING) + 275);  // 
+		lv_obj_set_pos(cb[n],30 +  n * 240 , 320);  // 
 	}
 	navigArrows = new NavigArrows(backGround, true, true);
 

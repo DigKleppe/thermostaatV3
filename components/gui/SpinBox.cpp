@@ -11,11 +11,11 @@
 #include "styles.h"
 
 #define TOPSPACING		5 
-#define SPACING			10 // between lines
+#define SPACING			30 // between lines
 #define TITLESPACING	5  // between title and keys
-#define BUTTONHEIGHT	70
+#define BUTTONHEIGHT	90
 #define BUTTONWIDTH		100
-#define TOTALHEIGHT		(SPINBUTTONNAMEFONT.line_height + TITLESPACING + BUTTONHEIGHT+ 20)
+#define TOTALHEIGHT		(SPINBUTTONNAMEFONT.line_height + TITLESPACING + BUTTONHEIGHT+ SPACING)
 #define VALUEWIDTH		140
 #define MAXCHARS 		5
 
@@ -82,7 +82,7 @@ SpinBox::SpinBox(lv_obj_t * parent, int line,const SpinBoxDescr_t *desc ){
 //		lv_obj_set_pos( label, (LV_HOR_RES_MAX-140)/2, y);
 //	lv_obj_align(label, LV_ALIGN_CENTER, 0, (-(LV_VER_RES_MAX/2)) + spinBoxButtonHeigth/2 + yPos   + 65);
 	
-	lv_obj_align(label, LV_ALIGN_CENTER, 0, (-(LV_VER_RES_MAX/2)) + yPos + BUTTONHEIGHT + 40);
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, (-(LV_VER_RES_MAX/2)) + yPos + BUTTONHEIGHT + 20);
 	lv_obj_add_style( label, &styleSpin,0);
 	lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
 	myDesc.label = label;
