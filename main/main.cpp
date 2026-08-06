@@ -107,14 +107,14 @@ void app_main(void) {
 	char str[30];
 	char str2[25];
 	int dummy;
-	bool toggle = false;
 	time_t now = 0;
 	struct tm timeinfo;
-		int lastSecond = -1;
+	int lastSecond = -1;
+	lv_display_t *display;
 
 	dummycp = server_root_cert_pem_start;
 
-	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT);
+	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
 
 
@@ -154,7 +154,8 @@ void app_main(void) {
 	I2CSemaphore = xSemaphoreCreateBinary();
 	xSemaphoreGive(I2CSemaphore);
 
-	bsp_display_start();
+	display = bsp_display_start();
+	bsp_display_rotate(display,LV_DISPLAY_ROTATION_180);
 
 	bsp_display_lock(0);
 	i2CmasterBusHandle = bsp_i2c_get_handle();
