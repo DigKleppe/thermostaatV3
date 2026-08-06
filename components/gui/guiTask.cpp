@@ -39,10 +39,16 @@ int screenIdx;
 extern float PIDsetting;
 extern char myIpAddress[];
 extern uint32_t upTime;
+extern int rssi;
 
 #define NRSCREENS 3
 
-const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID}, {"IPadres:", "%s", myIpAddress}, {"PID:", "%2.2f", &PIDsetting}, {"Optijd:", "%d", &upTime}, {NULL, NULL, NULL}};
+const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID}, 
+								{"IPadres:", "%s", myIpAddress},
+								{"PID:", "%2.2f", &PIDsetting}, 
+								{"Signaal:","%d", &rssi},
+								{"Optijd:", "%d", &upTime}, 
+								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
 	switch (idx) {

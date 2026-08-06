@@ -22,7 +22,6 @@
 
 #define AVERAGES 					30	
 
-#define NR_CALDESCRIPTORS 			4
 #define NOCAL 						99999
 
 typedef struct {
@@ -45,7 +44,7 @@ extern bool calvaluesReceived;
 extern int moduleNr;  // set by solderlink 
 void getAvgMeasValues ( sensorMssg_t * dest);
 
-extern const CGIdesc_t calibrateDescriptors[NR_CALDESCRIPTORS];
+extern const CGIdesc_t calibrateDescriptors[];
 
 float getTemperature (void);
 

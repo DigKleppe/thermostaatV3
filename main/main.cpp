@@ -41,7 +41,7 @@ const char *dummy;
 const char firmWareVersion[] = {"0.0"}; // just for info , set this in firmWareVersion.txt for update
 const char *getFirmWareVersion() { return firmWareVersion; }
 int moduleNr = 3; // sensor 3 for WTW
-
+int rssi;
 #define BOARD_I2C_SDA GPIO_NUM_15
 #define BOARD_I2C_SCL GPIO_NUM_7
 
@@ -89,6 +89,7 @@ TaskHandle_t guiCommonTaskh;
 TaskHandle_t guiTaskh;
 TaskHandle_t SensirionTaskh;
 TaskHandle_t connectTaskh;
+TaskHandle_t autocalTaskh;
 
 void sensirionTask(void *pvParameter);
 
@@ -161,13 +162,14 @@ void app_main(void) {
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 4 * 1024, NULL, 0, NULL);
 	xTaskCreate(sensirionTask, "sensirionTask", 4 * 1024, i2CmasterBusHandle, 0, &SensirionTaskh);
+	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 5, &autocalTaskh);
 
 	bsp_display_brightness_set(userSettings.backLight);
 	bsp_display_unlock();
 
 	while (1) {
 		vTaskDelay(200 / portTICK_PERIOD_MS);
-		
+		rssi = getRssi();
 		time(&now);
 		localtime_r(&now, &timeinfo);
 		if (lastSecond != timeinfo.tm_sec) {

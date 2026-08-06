@@ -48,17 +48,8 @@ const SpinBoxDescr_t settingsScreenDescr[] = {{
 												  .var = NULL,
 											  }};
 
-// SpinBoxDescr_t spinBoxDescrTemperatuur = {
-// 	.name = "Gewenste temperatuur:",
-// 	.format = "%2.1f",
-// 	.maxVal = 25.0,
-// 	.minVal = 10.0,
-// 	.step = 0.1,
-// 	.var = &userSettings.temperatureSetpoint,
-// };
 
-// void MainScreen::event_handler(lv_event_t * e)
-// static void event_handler(lv_event_t * e)
+
 void MainScreen::event_handler(lv_event_t *e) {
 	lv_event_code_t code = lv_event_get_code(e);
 	lv_obj_t *obj = lv_event_get_target(e);
@@ -72,21 +63,11 @@ void MainScreen::event_handler(lv_event_t *e) {
 	}
 }
 
-// void MainScreen::setTemperatureDisplayValue( float value) {
-//	measDisplay->setValue ( value );
-// }
-//
-// void MainScreen::setTemperatureDisplayText( char *text) {
-//	measDisplay->setText (text);
-// }
 
 MainScreen::MainScreen() {
 	screen = lv_obj_create(NULL);
 	const SpinBoxDescr_t *descr = settingsScreenDescr;
 	backGround = makeBackGround(screen);
-	//	clockDisplay = new ClockDisplay(backGround);
-	//	statusIndicator = new StatusIndicator ( backGround);
-	//	measDisplay = new MeasDisplay(backGround, 40,"Temperatuur", "\xC2\xB0" "C", "%2.1f");
 
 	int n = -1;
 	memset(spinBox, 0, sizeof(spinBox));
@@ -131,15 +112,6 @@ MainScreen::MainScreen() {
 	update();
 }
 
-// void MainScreen::setValues(mainScreenVars_t *p){
-//	vars = *p;
-//	update();
-//
-// }
-//
-// void MainScreen::getValues(mainScreenVars_t *p){
-//	*p = vars;
-// }
 
 void MainScreen::update(void) {
 

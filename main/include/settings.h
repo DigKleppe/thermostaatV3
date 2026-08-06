@@ -71,6 +71,8 @@ extern bool settingsChanged;
 
 esp_err_t saveSettings( void);
 esp_err_t loadSettings( void);
+void setUserDefaults(void);
+void setAdvDefaults(void);
 
 extern userSettings_t userSettings;
 extern advancedSettings_t advSettings;

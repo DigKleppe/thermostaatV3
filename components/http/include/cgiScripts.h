@@ -21,7 +21,8 @@ void CGI_init( void );
 
 extern const tCGI *g_pCGIs;
 //extern int g_iNumCGIs;
-typedef enum { FLT, STR, INT , DESCR , CALVAL} varType_t;
+typedef enum { FLT, STR, INT , DESCR , CALVAL, IPADDR} varType_t;
+
 
 typedef struct {
 	const char *name;
@@ -32,7 +33,7 @@ typedef struct {
 
 
 void parseCGIWriteData(char * buf, int received);
-int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size );
+int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable);
 const char* startCGIscript(int iIndex, char *pcParam);
 const char* readCGIvalues(int iIndex, char *pcParam);
 int readVarScript(char *pBuffer, int count);

@@ -20,8 +20,8 @@
 #include "settings.h"
 #include "udpClient.h"
 #include "wifiConnect.h"
-
 #include "ClockDisplay.h"
+#include "CGIcommonScripts.h"
 
 #include <math.h>
 #include <string.h>
@@ -42,7 +42,6 @@ extern int moduleNr;
 #define MAXLOGVALUES (24 * 60)
 
 static log_t lastVal;
-
 bool calvaluesReceived;
 static log_t avgVal; // avgeraged values
 bool sensirionError;
@@ -56,6 +55,7 @@ static SCD30 airSensor;
 Averager co2Averager;
 Averager tempAverager;
 Averager humAverager;
+extern int rssi;
 
 float getTemperature(void) { return lastVal.temperature; }
 const char *getFirmWareVersion();
@@ -279,7 +279,17 @@ void sensirionTask(void *pvParameter) {
 	} // end while(1)
 } // end sensirionTask
 
+
+
+void getAvgMeasValues(sensorMssg_t *dest) {
+	dest->co2 = avgVal.co2;
+	dest->hum = avgVal.hum;
+	dest->temperature = avgVal.temperature;
+}
+
 // CGI stuff
+
+
 
 int printLog(log_t *logToPrint, char *pBuffer) {
 	int len;
@@ -321,7 +331,8 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		scriptState++;
 		len = sprintf(pBuffer, "%s,%1.2f\n", "Temperatuur offset", userSettings.temperatureOffset);
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "RH offset", userSettings.RHoffset);
-		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", getRssi());
+		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PWM", PIDsetting);
+		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
 		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", getFirmWareVersion());
 		len += sprintf(pBuffer + len, "%s,%s\n", "SPIFFS versie", wifiSettings.SPIFFSversion);
 		return len;
@@ -374,15 +385,15 @@ int getSensorNameScript(char *pBuffer, int count) {
 	return 0;
 }
 
-int saveSettingsScript(char *pBuffer, int count) {
-	saveSettings();
-	return 0;
-}
+// int saveSettingsScript(char *pBuffer, int count) {
+// 	saveSettings();
+// 	return 0;
+// }
 
-int cancelSettingsScript(char *pBuffer, int count) {
-	loadSettings();
-	return 0;
-}
+// int cancelSettingsScript(char *pBuffer, int count) {
+// 	loadSettings();
+// 	return 0;
+// }
 
 calValues_t calValues = {NOCAL, NOCAL, NOCAL};
 
@@ -391,6 +402,7 @@ const CGIdesc_t calibrateDescriptors[] = {
 	{"temperatuur", &calValues.temperature, FLT, 1},
 	{"RH", &calValues.hum, FLT, 1},
 	{"CO2", &calValues.CO2, FLT, 1},
+	{NULL, NULL, INT, 1},
 };
 
 void parseCGIWriteData(char *buf, int received) {
@@ -403,8 +415,17 @@ void parseCGIWriteData(char *buf, int received) {
 		saveSettings();
 		esp_restart();
 	}
+	if (strncmp(buf, "setVal:", 7) == 0) { // values are written , in sensirionTasks write these to SCD30
+		if (readActionScript(&buf[7], writeVarDescriptorTable) >= 0) {
+			save = true;
+		}
+		if (readActionScript(&buf[7], advancedWriteVarDescriptorTable) >= 0) {
+			save = true;
+		}
+	}
+
 	if (strncmp(buf, "setCal:", 7) == 0) { // calvalues are written , in sensirionTasks write these to SCD30
-		if (readActionScript(&buf[7], calibrateDescriptors, NR_CALDESCRIPTORS)) {
+		if (readActionScript(&buf[7], calibrateDescriptors)) {
 			calvaluesReceived = true; // update CO2 synchronous above
 
 			ESP_LOGI(TAG, "calvalues received: %f, %f, %f", calValues.CO2, calValues.temperature, calValues.hum);
@@ -422,3 +443,4 @@ void parseCGIWriteData(char *buf, int received) {
 	if (save)
 		saveSettings();
 }
+

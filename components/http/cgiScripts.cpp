@@ -87,9 +87,9 @@ const char* startCGIscript(int iIndex, char *pcParam) {
 	return ("/CGIreturn.txt");
 }
 
-int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
+int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable) {
 	int n;
-	int m;
+	int idx;
 	int len;
 	int tableItem = -1;
 
@@ -101,7 +101,7 @@ int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
 		return false;
 
 	printf("%s\n", pcParam);
-	char name[20];
+	char name[30];
 	do {
 		success = false;
 		len = strlen(p);
@@ -109,10 +109,11 @@ int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
 			if (p[n] == '=') {
 				strncpy(name, p, n);
 				name[n] = 0;
-				for (m = 0; m < size; m++) {
-	
-		//	printf("\n%s ", CGIdescTable->name);
-				if (strcmp(name, CGIdescTable->name) == 0) { // found
+			//	for (m = 0; m < size; m++) {
+				idx = 0;
+				while(( CGIdescTable->name != NULL) && !success )
+				{
+					if (strcmp(name, CGIdescTable->name) == 0) { // found
 						if (p[n + 1] != '&') { // empty value
 							switch (CGIdescTable->type) {
 							case FLT:
@@ -134,21 +135,17 @@ int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
 								*pDest = 0;
 								break;
 
-							case CALVAL:
-//								if (sscanf(&p[n + 1], "%lf", (double*) actionDescriptors[m].pValue) ==1) // read value
-//									newCalValueReceived = true;
-								break;
-
 							case DESCR:
+							case IPADDR:
 								break;
 							}
 						}
 						success = true;
-						tableItem = m;
+						tableItem = idx;
 		 				break;
 					}
 					CGIdescTable++;
-				
+					idx++;
 				}
 				break;
 			}
@@ -170,6 +167,90 @@ int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
 	return (tableItem);  // return index in CGIdescTable
 //	return settingsChanged;
 }
+
+// int readActionScript(char *pcParam, const CGIdesc_t *CGIdescTable, int size) {
+// 	int n;
+// 	int m;
+// 	int len;
+// 	int tableItem = -1;
+
+// 	bool success = false;
+
+// 	char *p = pcParam; // var=1.23&var2=4.56.	<tr>
+// 	char *pDest, *pSrc;
+// 	if (pcParam == NULL)
+// 		return false;
+
+// 	printf("%s\n", pcParam);
+// 	char name[20];
+// 	do {
+// 		success = false;
+// 		len = strlen(p);
+// 		for (n = 0; n < len; n++) {
+// 			if (p[n] == '=') {
+// 				strncpy(name, p, n);
+// 				name[n] = 0;
+// 				for (m = 0; m < size; m++) {
+	
+// 		//	printf("\n%s ", CGIdescTable->name);
+// 				if (strcmp(name, CGIdescTable->name) == 0) { // found
+// 						if (p[n + 1] != '&') { // empty value
+// 							switch (CGIdescTable->type) {
+// 							case FLT:
+// 								sscanf(&p[n + 1], "%f", (float*) CGIdescTable->pValue); // read value
+// 								break;
+// 							case INT:
+// 								sscanf(&p[n + 1], "%d", (int*) CGIdescTable->pValue); // read value
+// 								break;
+// 							case STR:
+// 								pDest = (char*) CGIdescTable->pValue;
+// 								pSrc = &p[n + 1];
+// 								for (int m = 0; m < MAX_STRLEN - 1; m++) {
+// 									if (*pSrc == '+') // spaces are replaced by '+' in HTML form
+// 										*pSrc = ' ';
+// 									*pDest++ = *pSrc++;
+// 									if ((*pSrc == '&') || (*pSrc == 0)) // read until '&' or EOS
+// 										break;
+// 								}
+// 								*pDest = 0;
+// 								break;
+
+// 							case CALVAL:
+// //								if (sscanf(&p[n + 1], "%lf", (double*) actionDescriptors[m].pValue) ==1) // read value
+// //									newCalValueReceived = true;
+// 								break;
+
+// 							case DESCR:
+// 								break;
+// 							}
+// 						}
+// 						success = true;
+// 						tableItem = m;
+// 		 				break;
+// 					}
+// 					CGIdescTable++;
+				
+// 				}
+// 				break;
+// 			}
+// 		}
+// 		p += n + 1;
+// 		if (success)
+// 			settingsChanged = true;
+
+// 		success = false;  // try to find next value
+// 		for (n = 0; n < strlen(p); n++) {
+// 			if (p[n] == '&') {
+// 				p += n + 1;
+// 				success = true;
+// 				break;
+// 			}
+// 		}
+// 	} while (success);
+
+// 	return (tableItem);  // return index in CGIdescTable
+// //	return settingsChanged;
+// }
 //void parseCGIWriteData(char * buf, int received) {
 //
 //}
