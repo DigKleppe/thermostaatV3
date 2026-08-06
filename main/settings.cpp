@@ -32,17 +32,17 @@ systemInfo_t systemInfoDefaults = { 0,0,0,0,0,0,{SYSTEMINFO_CHECKSTR }};
 
 const userSettings_t userSettingsDefaults = {
 	{"Thermostaat"},
-	19.0, 	//temperatureSetpoint
+	21.0, 	//temperatureSetpoint
 	2,  	//temperatureOffset
 	0.0,	//RHoffset
-	5.0,	//PIDp
-	0.2, 	//PIDi
-	40, 	//PIDmaxi
+	20,		//PIDp
+	0.5, 	//PIDi
+	50, 	//PIDmaxi
 	15,		// controlInterval
 	true,	//heatingOn
 	true,   //coolingOn
-	false, // isCalibrated
-	15.0,		//backLight
+	false, 	// isCalibrated
+	50,		//backLight
 	USERSETTINGS_CHECKSTR };
 
 

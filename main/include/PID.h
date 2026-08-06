@@ -10,10 +10,14 @@
 
 #include "driver/gpio.h"
 
-#define COOLING_PIN 	GPIO_NUM_2
-#define HEATING_PIN 	GPIO_NUM_15  //(JTAG?)
-//#warning "HEATING_PIN!"  
-//#define HEATING_PIN 	GPIO_NUM_2  //(JTAG?)
+// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
+// T6 removed , pin 1 U6 connected to pin2/3 U7 
+// RS485A   koeling
+// RS485B   verwarming
+
+#define RS485DE_PIN     GPIO_NUM_6   // CANtx      
+#define RS485TX_PIN     GPIO_NUM_44  // RX0    
+
 
 void updatePID ( float temperature);
 extern float PIDsetting; // for cgi

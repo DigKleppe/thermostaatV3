@@ -18,6 +18,7 @@
 #include "settings.h"
 #include "updateTask.h"
 #include "wifiConnect.h"
+#include "PID.h"
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
@@ -111,6 +112,15 @@ void app_main(void) {
 		int lastSecond = -1;
 
 	dummycp = server_root_cert_pem_start;
+
+	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT);
+	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
+
+
+
+	// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
+// T6 removed , pin 1 U6 connected to pin2/3 U7 
+
 
 	displayMssg_t displayMssg;
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;

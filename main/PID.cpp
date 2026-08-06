@@ -10,24 +10,23 @@
 #include "settings.h"
 #include "sensirionTask.h"
 #include "PID.h"
+#include "esp_log.h"
 
+#define TAG "PID"
 
-#define MINIMUM_ON_TIME 240 // seconds
+#define MINIMUM_ON_TIME   120 // seconds
+#define HEATINGONLEVEL	  0
 
 float PIDsetting; // for cgi
 thermostatStatus_t thermostatStatus;
 
-
-void heatingOff(){
-	printf( " *** OFF *** ");
-	gpio_set_level(HEATING_PIN, 1);
-	thermostatStatus = THERMOSTATOFF;
-
-}
 void heatingOn(){
 	if ( userSettings.heatingOn) {
-		printf( " *** ON *** ");
-		gpio_set_level(HEATING_PIN, 0);
+		gpio_set_level(RS485DE_PIN, 1);
+		gpio_set_level(RS485TX_PIN, HEATINGONLEVEL);
+		
+		ESP_LOGI( TAG, "Heating ON");
+
 		thermostatStatus = HEATING_ON;
 	}
 	else
@@ -36,20 +35,24 @@ void heatingOn(){
 
 void coolingOn(){
 	if ( userSettings.coolingOn) {
-		gpio_set_level(COOLING_PIN, 0);
+		gpio_set_level(RS485DE_PIN, 1);
+		gpio_set_level(RS485TX_PIN, !HEATINGONLEVEL);
 		thermostatStatus = COOLING_ON;
+		ESP_LOGI( TAG,"Cooling  ON");
 	}
 	else
 		thermostatStatus = THERMOSTATOFF;
-
 }
 
-void coolingOff(){
-	gpio_set_level(COOLING_PIN, 1);
+void bothOff (void) {
+	gpio_set_level(RS485DE_PIN, 0);
 	thermostatStatus = THERMOSTATOFF;
+		ESP_LOGI( TAG,"off");
 }
+
 
 // called from sensirionTask every MEASINTERVAL seconds
+
 
 void setPWM(int perc) {
 	static int onTimer;
@@ -65,8 +68,7 @@ void setPWM(int perc) {
 
 	switch (state) {
 	case 0:  // inactove
-		heatingOff();
-		coolingOff();
+		bothOff();
 		offTimer = 0;
 		onTimer = 0;
 		if (perc > 1) {
@@ -90,7 +92,7 @@ void setPWM(int perc) {
 			state = 0;
 		else {
 			onTimer--;
-			if (onTimer == 0) {
+			if (onTimer <= 0) {
 				if (perc < 99) {
 					offTimer = (100 - perc) / MEASINTERVAL;
 					state++;
@@ -101,8 +103,7 @@ void setPWM(int perc) {
 		break;
 
 	case 2:  // off timer active
-		heatingOff();
-		coolingOff();
+		bothOff();
 		if (perc > lastPerc) {  // react quick on higher demand
 			int newOffTimer = (100 - perc) / MEASINTERVAL;
 			if (newOffTimer < offTimer)
@@ -113,9 +114,11 @@ void setPWM(int perc) {
 		offTimer--;
 		if (offTimer == 0) {
 			state = 1;
+			onTimer = MINIMUM_ON_TIME / MEASINTERVAL;
 			break;
 		}
 	}
+	ESP_LOGI( TAG, "OnTmr: %d  OffTmr:%d State:%d",  onTimer, offTimer, state);
 }
 
 
@@ -128,8 +131,11 @@ void updatePID(float temperature) {
 	delta = userSettings.temperatureSetpoint - temperature;
 	result = delta * userSettings.PIDp;
 	iSum += delta * userSettings.PIDi;
-	if ( userSettings.heatingOn && (delta < 0)) // temperature above setpoint
+	if ( userSettings.heatingOn && (delta < 0)) // temperature above setpoint heating
 		iSum = 0; // zero i to avoid overshoot
+
+	// if ( userSettings.coolingOn && (delta > 0)) // temperature below setpoint cooling
+	// 	iSum = 0; // zero i to avoid overshoot
 
 	if (iSum > 0) {
 		if (iSum > userSettings.PIDmaxi)  // limit to maxI
@@ -148,7 +154,7 @@ void updatePID(float temperature) {
 		if ( iSum < 0 ) // limit to zero if cooling is off
 			iSum = 0;
 	}
-	printf("\ndelta: %f P:%f I:%f ", delta, result, iSum);
+//	printf("\ndelta: %f P:%f I:%f ", delta, result, iSum);
 
 	result += iSum;
 
@@ -158,7 +164,7 @@ void updatePID(float temperature) {
 	if (result < -100)
 		result = -100;
 
-	printf( " %%: %1.1f \n",  result);
+	ESP_LOGI( TAG, "PWM: %1.1f \n",  result);
 	PIDsetting = result;
 	setPWM(result);
 }
