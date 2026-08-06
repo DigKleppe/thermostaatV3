@@ -30,9 +30,9 @@
 // fonts Ohm, micro  0x3A9,0x3BC 01234567890 -.,mMnkVAHz
 
 #define PADDING 12 // 8
-#define ITEMHEIGHT	95
+#define ITEMHEIGHT	80
 #define ITEMWIDTH	200
-#define FIRSTY 		20  //CLOCKDISPLAYHEIGHT
+#define FIRSTY 		80  //CLOCKDISPLAYHEIGHT
 
 //const char units[4][7] { "\xC2" "\xB0" "C", "%RH",  "ppm","" };
 static const char * units[] = { "\xC2\xB0" "C", "%" ,"ppm"};

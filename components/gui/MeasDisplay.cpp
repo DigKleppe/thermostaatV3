@@ -20,7 +20,7 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 
 	if ( name != NULL) {
 		nameLabel = lv_label_create(_parent);
-		lv_obj_set_pos(nameLabel, 10,y);
+		lv_obj_set_pos(nameLabel, 2,y);
 		lv_obj_add_style(nameLabel, &styleMeasName, 0);
 		lv_label_set_text(nameLabel, name);
 		lv_obj_set_style_text_align(nameLabel, LV_TEXT_ALIGN_RIGHT, 0);
@@ -35,7 +35,8 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 	if ( name != NULL) {
 		lv_area_t c;
 		lv_obj_get_coords(nameLabel, &c);
-		lv_obj_set_pos(valueLabel, 10,c.y2 + PADDING + y);
+	//	lv_obj_set_pos(valueLabel, 10,c.y2 + PADDING + y);
+		lv_obj_set_pos(valueLabel, 70,c.y1 -20 + y);
 	}
 	else
 		lv_obj_set_pos(valueLabel, 10,y);
@@ -44,6 +45,7 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 		lv_obj_set_size(unitLabel, 150, ITEMHEIGHT - PADDING);
 		lv_obj_add_style(unitLabel, &styleMeasUnit, 0);
 		lv_label_set_text(unitLabel, unit);
+		//lv_obj_align_to(unitLabel, valueLabel, LV_ALIGN_TOP_RIGHT, 160, 0);
 		lv_obj_align_to(unitLabel, valueLabel, LV_ALIGN_TOP_RIGHT, 160, 0);
 	}
 }

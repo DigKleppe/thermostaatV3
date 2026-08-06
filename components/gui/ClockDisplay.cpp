@@ -24,7 +24,7 @@ ClockDisplay::ClockDisplay(lv_obj_t*  parent, lv_coord_t y) {
 	lv_obj_add_style( label, &styleClock,0);
 	lv_obj_set_size(label, 240,h + 4);
 	lv_label_set_text(label,"12:34:56");
-	lv_obj_set_pos( label, 260, 1);
+	lv_obj_set_pos( label, 5, 1);
 	
 	// if( y == -1)
 	// 	lv_obj_set_align(label, LV_ALIGN_TOP_MID);
