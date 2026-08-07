@@ -7,10 +7,10 @@
  *      handles screens
  */
 
-#include "MeasScreen.h"
+#include "guiTask.h"
 #include "InfoScreen.h"
 #include "MainScreen.h"
-#include "guiTask.h"
+#include "MeasScreen.h"
 
 // extern "C" {      if ( timer++ == 200) {
 
@@ -29,7 +29,7 @@ userState_t userState = USER_STATE_RUN;
 
 QueueHandle_t displayMssgBox;
 QueueHandle_t displayReadyMssgBox;
-SemaphoreHandle_t xGuiSemaphore;
+// SemaphoreHandle_t xGuiSemaphore;
 
 MainScreen *mainScreen;
 MeasScreen *measScreen;
@@ -43,11 +43,11 @@ extern int rssi;
 
 #define NRSCREENS 3
 
-const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID}, 
+const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
-								{"PID:", "%2.2f", &PIDsetting}, 
-								{"Signaal:","%d", &rssi},
-								{"Optijd:", "%d", &upTime}, 
+								{"PID:", "%2.2f", &PIDsetting},
+								{"Signaal:", "%d", &rssi},
+								{"Optijd:", "%d", &upTime},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
@@ -86,11 +86,9 @@ void prevScreenClick(lv_event_t *e) { // from navigArrows
 void guiTask(void *pvParameter) {
 	displayMssg_t recDdisplayMssg;
 	int dummy;
-	int step = 0;
-
 	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
 	displayReadyMssgBox = xQueueCreate(1, sizeof(uint32_t));
-	xGuiSemaphore = xSemaphoreCreateMutex();
+
 	initStyles();
 
 	mainScreen = new MainScreen();
@@ -101,32 +99,29 @@ void guiTask(void *pvParameter) {
 
 	while (1) {
 		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, 0) == pdTRUE) {
-			if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-				switch (recDdisplayMssg.displayItem) {
-				case DISPLAY_ITEM_STATUSLINE:
-					measScreen->setStatusLine((const char *)recDdisplayMssg.str1);
-					break;
+			switch (recDdisplayMssg.displayItem) {
+			case DISPLAY_ITEM_STATUSLINE:
+				measScreen->setStatusLine((const char *)recDdisplayMssg.str1);
+				break;
 
-				case DISPLAY_ITEM_MEASLINE:
-					measScreen->setDisplayText(recDdisplayMssg.line, (char *)recDdisplayMssg.str1);
-					break;
-				case DISPLAY_ITEM_STOP:
-				case DISPLAY_ITEM_COLOR:
-					break;
+			case DISPLAY_ITEM_MEASLINE:
+				measScreen->setDisplayText(recDdisplayMssg.line, (char *)recDdisplayMssg.str1);
+				break;
 
-				case DISPLAY_ITEM_MESSAGE:
-					//	messageScreen.show ((const char *) recDdisplayMssg.str1 , LV_COLOR_BLACK, recDdisplayMssg.showTime);
-					break;
-				}
-				xSemaphoreGive(xGuiSemaphore);
+			case DISPLAY_ITEM_CLOCK:
+				measScreen->setClockDisplayText((char *)recDdisplayMssg.str1);
+				break;
+
+			case DISPLAY_ITEM_STOP:
+			case DISPLAY_ITEM_COLOR:
+				break;
+
+			case DISPLAY_ITEM_MESSAGE:
+				//	messageScreen.show ((const char *) recDdisplayMssg.str1 , LV_COLOR_BLACK, recDdisplayMssg.showTime);
+				break;
 			}
-			xQueueSend(displayReadyMssgBox, &dummy, 0);
-		}
-		else
-			vTaskDelay(10 / portTICK_PERIOD_MS);
-
+		} 
+		xQueueSend(displayReadyMssgBox, &dummy, 0);
+		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}
 }
-
-// /home/dig/.espressif/tools/openocd-esp32/v0.10.0-esp32-20200420/openocd-esp32/bin/openocd -f interface/ftdi/c232hm.cfg -f board/esp-wroom-32.cfg -c "program_esp
-// /home/dig/projecten/littleVGL/dmmGui/build/dmm. 0x10000 verify"

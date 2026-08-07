@@ -20,7 +20,7 @@ class ClockDisplay {
 public:
 	ClockDisplay(lv_obj_t * parent, lv_coord_t y= -1);
 	virtual ~ClockDisplay();
-	void setText ( char *);
+	void setText ( const char *);
 
 
 private:

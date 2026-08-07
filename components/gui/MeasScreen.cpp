@@ -98,15 +98,16 @@ void MeasScreen::setStatusIndicator (thermostatStatus_t status) {
 
 void MeasScreen::setDisplayValue(int line , int value) {
 	measDisplay[line]->setValue ( value );
-//	char str[20];
-//	sprintf( str, "%d", value );
-//	setDisplayText(line, str);
 }
 
 void MeasScreen::setValueAndName(int line, const char *value, const char *name) {
 	setDisplayText( line,(char *)  value);
-	//lv_label_set_text(label[line], name);
 }
+
+void MeasScreen::setClockDisplayText(const char *text){
+	clockDisplay->setText(text);
+}
+
 
 void MeasScreen::show() {
 	lv_scr_load(screen);

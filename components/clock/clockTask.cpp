@@ -6,6 +6,7 @@
  */
 
 #include "ClockDisplay.h"
+#include "guiTask.h"
 #include "esp_log.h"
 #include "esp_netif_sntp.h"
 #include "esp_sntp.h"
@@ -21,16 +22,16 @@ struct tm timeinfo;
 static const char *TAG = "Clock";
 #define CONFIG_SNTP_TIME_SERVER "pool.ntp.org"
 
-#define MAXDISPLAYS 5
-ClockDisplay *clockToUpdate[MAXDISPLAYS];
-int clockDisplays;
+// #define MAXDISPLAYS 5
+// ClockDisplay *clockToUpdate[MAXDISPLAYS];
+// int clockDisplays;
 
-void registerTimeUpdate(ClockDisplay *p) {
-	if (clockDisplays < MAXDISPLAYS)
-		clockToUpdate[clockDisplays++] = p;
-	else
-		ESP_LOGE(TAG, "Maximum number clockDisplays reached");
-}
+// void registerTimeUpdate(ClockDisplay *p) {
+// 	if (clockDisplays < MAXDISPLAYS)
+// 		clockToUpdate[clockDisplays++] = p;
+// 	else
+// 		ESP_LOGE(TAG, "Maximum number clockDisplays reached");
+// }
 
 static void initialize_sntp(void) {
 	ESP_LOGI(TAG, "Initializing and starting SNTP");
@@ -43,6 +44,11 @@ void clockTask(void *pvParameter) {
 	char strftime_buf[64];
 	ClockDisplay *pd;
 	bool once = false;
+	displayMssg_t displayMssg;
+	int dummy;
+	displayMssg.displayItem = DISPLAY_ITEM_CLOCK;
+	displayMssg.str1 = strftime_buf;
+	displayMssg.str2 = NULL;
 
 	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
 	tzset();
@@ -69,10 +75,9 @@ void clockTask(void *pvParameter) {
 				once = true;
 			}
 			sprintf(strftime_buf, "%2d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-			for (int n = 0; n < clockDisplays; n++) {
-				pd = clockToUpdate[n];
-				pd->setText(strftime_buf);
-			}
+			xQueueReceive(displayReadyMssgBox, &dummy, 0); // empty mssgbox
+			if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
+				xQueueReceive(displayReadyMssgBox, &dummy, 1000 / portTICK_PERIOD_MS); // if accepted wait until data is displayed
 		}
 		vTaskDelay(200 / portTICK_PERIOD_MS);
 	} while (1);

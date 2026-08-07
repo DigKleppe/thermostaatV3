@@ -117,11 +117,8 @@ void app_main(void) {
 	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
 
-
-
-	// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
+// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
 // T6 removed , pin 1 U6 connected to pin2/3 U7 
-
 
 	displayMssg_t displayMssg;
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
@@ -159,11 +156,11 @@ void app_main(void) {
 
 	bsp_display_lock(0);
 	i2CmasterBusHandle = bsp_i2c_get_handle();
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 0, &guiTaskh, 1);
+	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 4 * 1024, NULL, 0, NULL);
 	xTaskCreate(sensirionTask, "sensirionTask", 4 * 1024, i2CmasterBusHandle, 0, &SensirionTaskh);
-	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 5, &autocalTaskh);
+	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
 
 	bsp_display_brightness_set(userSettings.backLight);
 	bsp_display_unlock();
