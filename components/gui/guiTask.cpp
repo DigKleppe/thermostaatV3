@@ -87,10 +87,9 @@ void guiTask(void *pvParameter) {
 	displayMssg_t recDdisplayMssg;
 	int dummy;
 	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
-	displayReadyMssgBox = xQueueCreate(1, sizeof(uint32_t));
+	TickType_t xLastWakeTime;
 
 	initStyles();
-
 	mainScreen = new MainScreen();
 	measScreen = new MeasScreen();
 	infoScreen = new InfoScreen(infoDesc);
@@ -98,7 +97,8 @@ void guiTask(void *pvParameter) {
 	showScreen(0);
 
 	while (1) {
-		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, 0) == pdTRUE) {
+		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, portMAX_DELAY) == pdTRUE) {
+			xLastWakeTime = xTaskGetTickCount();
 			switch (recDdisplayMssg.displayItem) {
 			case DISPLAY_ITEM_STATUSLINE:
 				measScreen->setStatusLine((const char *)recDdisplayMssg.str1);
@@ -119,9 +119,12 @@ void guiTask(void *pvParameter) {
 			case DISPLAY_ITEM_MESSAGE:
 				//	messageScreen.show ((const char *) recDdisplayMssg.str1 , LV_COLOR_BLACK, recDdisplayMssg.showTime);
 				break;
+
+			default:
+				break;
 			}
-		} 
-		xQueueSend(displayReadyMssgBox, &dummy, 0);
-		vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		xTaskDelayUntil(&xLastWakeTime, DISPLAYPROCESTTIME - (110 / portTICK_PERIOD_MS));
 	}
 }
+

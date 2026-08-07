@@ -10,7 +10,7 @@ set(COMPONENT_ADD_INCLUDEDIRS "include" ${WAVESHARE_BSP_DIR} )
 set(COMPONENT_EMBED_TXTFILES "${project_dir}/main/server_certs/ca_cert.pem")
 register_component()
 
-spiffs_create_partition_image(storage ../spiffs_image FLASH_IN_PROJECT)
+#spiffs_create_partition_image(storage ../spiffs_image FLASH_IN_PROJECT)
 
 #set(LV_DEMO_DIR ../managed_components/lvgl__lvgl/demos)
 #file(GLOB_RECURSE LV_DEMOS_SOURCES ${LV_DEMO_DIR}/*.c)

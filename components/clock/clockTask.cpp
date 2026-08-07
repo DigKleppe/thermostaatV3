@@ -75,9 +75,7 @@ void clockTask(void *pvParameter) {
 				once = true;
 			}
 			sprintf(strftime_buf, "%2d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-			xQueueReceive(displayReadyMssgBox, &dummy, 0); // empty mssgbox
-			if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-				xQueueReceive(displayReadyMssgBox, &dummy, 1000 / portTICK_PERIOD_MS); // if accepted wait until data is displayed
+			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 		}
 		vTaskDelay(200 / portTICK_PERIOD_MS);
 	} while (1);

@@ -10,8 +10,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+#define DISPLAYPROCESTTIME		(200/ portTICK_PERIOD_MS) // @80Mhz CPU
+
 extern QueueHandle_t displayMssgBox;
-extern QueueHandle_t displayReadyMssgBox;
+//extern QueueHandle_t displayReadyMssgBox;
 
 typedef enum {
 	DISPLAY_ITEM_STATUSLINE, DISPLAY_ITEM_MEASLINE, DISPLAY_ITEM_MESSAGE, DISPLAY_ITEM_CLOCK,DISPLAY_ITEM_OUTTEMPERATURE, DISPLAY_ITEM_COLOR,  DISPLAY_ITEM_STOP

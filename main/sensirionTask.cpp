@@ -32,6 +32,8 @@
 #define SCD30_TIMEOUT 2500 // * 10ms
 #define CO2AUTOCALTIME 15  // minutes
 
+#define NR_SENSORVALUES		3 
+
 // #define SIMULATE
 
 static const char *TAG = "sensirionTask";
@@ -142,8 +144,7 @@ void updTransmitTask(void *pvParameter) {
 
 void sensirionTask(void *pvParameter) {
 	displayMssg_t displayMssg;
-	char str[80];
-	char str2[25];
+	char displayStr[NR_SENSORVALUES][80];
 	int dummy;
 	time_t now = 0;
 	struct tm timeinfo;
@@ -152,8 +153,7 @@ void sensirionTask(void *pvParameter) {
 	int sensirionTimeoutTimer = SCD30_TIMEOUT;
 
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
-	displayMssg.str1 = str;
-	displayMssg.str2 = str2;
+	displayMssg.str2 = NULL;
 
 	i2c_master_bus_handle_t I2CbusHandle = (i2c_master_bus_handle_t)pvParameter;
 
@@ -216,27 +216,29 @@ void sensirionTask(void *pvParameter) {
 
 			updatePID(lastVal.temperature);
 
-			//	ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
+			//ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
 
-			for (int n = 0; n < 3; n++) {
+			for (int n = 0; n < NR_SENSORVALUES; n++) {
 				displayMssg.line = n;
+				displayMssg.str1 = displayStr[n];
 				switch (n) {
 				case 0:
-					sprintf(str, "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
+					sprintf(displayStr[n], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
 					break;
 				case 1:
-					sprintf(str, "%2.1f", lastVal.hum - userSettings.RHoffset);
+					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);
 					break;
 				case 2:
 					if (lastVal.co2 > 9999) // error sensor
-						sprintf(str, "----");
+						sprintf(displayStr[n], "----");
 					else
-						sprintf(str, "%2.0f", lastVal.co2);
+						sprintf(displayStr[n], "%2.0f", lastVal.co2);
 					break;
 				}
-				xQueueReceive(displayReadyMssgBox, &dummy, 0); // empty mssgbox
-				if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-					xQueueReceive(displayReadyMssgBox, &dummy, 1000 / portTICK_PERIOD_MS); // if accepted wait until data is displayed
+				if( xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS )
+					ESP_LOGE(TAG, "to");
+
+			//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);	
 			}
 
 #ifdef TURBO_MODE

@@ -10,7 +10,7 @@
 
 #define PADDING 16
 #define ITEMHEIGHT	95
-#define ITEMWIDTH	200
+#define VALUEWIDTH	200
 #define FIRSTY 		CLOCKDISPLAYHEIGHT
 
 MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char * unit, const char * formatStr)
@@ -27,7 +27,7 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 	}
 	valueLabel = lv_label_create(_parent);
 
-	lv_obj_set_size(valueLabel, 170, ITEMHEIGHT - PADDING);
+	lv_obj_set_size(valueLabel, VALUEWIDTH, ITEMHEIGHT - PADDING);
 	lv_obj_add_style(valueLabel, &styleValue, 0);
 	lv_label_set_text(valueLabel, "----");
 	lv_obj_set_style_text_align(valueLabel, LV_TEXT_ALIGN_RIGHT, 0);

@@ -193,6 +193,7 @@ void app_main(void) {
 		switch (connectStatus) {
 		case CONNECT_READY:
 		case CONNECTED:
+		case CHECKFIRMWARE:
 			str[0] = 0; // clear statusline
 			break;
 
@@ -209,9 +210,8 @@ void app_main(void) {
 			snprintf(str, (volatile size_t){sizeof(str)}, "Verbinden met %s", wifiSettings.SSID);
 			break;
 		}
+		xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);	
 
-		if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-			xQueueReceive(displayReadyMssgBox, &dummy, 500); // if accepted wait until data is displayed
 	}
 
 	// while(1) {
