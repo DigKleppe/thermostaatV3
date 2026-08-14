@@ -35,8 +35,8 @@ void heatingOn(){
 
 void coolingOn(){
 	if ( userSettings.coolingOn) {
-		gpio_set_level(RS485DE_PIN, 1);
-		gpio_set_level(RS485TX_PIN, !HEATINGONLEVEL);
+
+		
 		thermostatStatus = COOLING_ON;
 		ESP_LOGI( TAG,"Cooling  ON");
 	}
@@ -60,6 +60,10 @@ void setPWM(int perc) {
 	static int lastPerc = 999;
 	static int state = 0;
 	bool heatingActive = true;
+
+#warning PWM off
+	return;
+
 
 	if (perc < 0) {
 		heatingActive = false;

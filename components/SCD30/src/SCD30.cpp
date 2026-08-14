@@ -27,6 +27,13 @@
  adapted for non-arduino ESP32 idf 5
  */
 
+ #define TESTPOINTS
+#ifdef TESTPOINTS 
+#define RS485DE_PIN     GPIO_NUM_6   // CANtx      
+#define RS485TX_PIN     GPIO_NUM_44  // RX0  
+#include "driver/gpio.h"  
+#endif 
+
 #define TAG "SDC30"
 
 #define SCD30CLK 50000 // 50khz recommended SCD 30!
@@ -103,6 +110,7 @@ extern esp_err_t i2c_master_receive(i2c_master_dev_handle_t, uint8_t *, size_t, 
 
 #define SIMULATEINTERVAL 50
 extern SemaphoreHandle_t I2CSemaphore; // used by lvgl touch, shares the same bus
+
 
 typedef union {
 	uint8_t array[4];
@@ -192,6 +200,11 @@ SCD30::SCD30(void) {
 
 esp_err_t SCD30::begin(i2c_master_bus_handle_t I2CbusHandle, bool autoCalibrate, bool measBegin) {
 	esp_err_t err;
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485DE_PIN, 1);
+		ESP_LOGE(TAG, "TESTPOINTS ON!");
+#endif 
+
 
 	i2c_device_config_t dev_cfg = {
 		.dev_addr_length = I2C_ADDR_BIT_LEN_7,
@@ -510,19 +523,38 @@ esp_err_t SCD30::getSettingValue(uint16_t registerAddress, uint16_t *val) {
 		xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 		//	err = i2c_master_write_to_device(_i2cPort, SCD30_ADDRESS, (uint8_t *)&registerAddress, sizeof(registerAddress), I2C_TIMEOUT_MS /
 		//portTICK_PERIOD_MS);
+
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 1);
+#endif 
+
 		err = i2c_master_transmit(sps30DevHandle, (uint8_t *)&registerAddress, sizeof(registerAddress), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 		xSemaphoreGive(I2CSemaphore);
+
+#ifdef TESTPOINTS 		
+		gpio_set_level(RS485TX_PIN, 0);
+#endif 
+
+
 		if (err != ESP_OK) {
 			ESP_LOGE(TAG, "i2c_master_write_to_SCD30 failed (%s)!", esp_err_to_name(err));
 			vTaskDelay(3 / portTICK_PERIOD_MS);
 		}
 		vTaskDelay(3 / portTICK_PERIOD_MS);
 		if (!err) {
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 1);
+#endif 
+
 			xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 			//	err =  i2c_master_read_from_device(_i2cPort, SCD30_ADDRESS, receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS /
 			//portTICK_PERIOD_MS);
 			err = i2c_master_receive(sps30DevHandle, (uint8_t *)&receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 			xSemaphoreGive(I2CSemaphore);
+
+		#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 0);
+#endif 	
 			if (err != ESP_OK) {
 				ESP_LOGE(TAG, "i2c_master_read_from_SCD30 failed (%s)!", esp_err_to_name(err));
 				vTaskDelay(3 / portTICK_PERIOD_MS);
@@ -560,11 +592,19 @@ esp_err_t SCD30::readRegister(uint16_t registerAddress, uint16_t *data) {
 
 	if (err == ESP_OK) {
 		vTaskDelay(3 / portTICK_PERIOD_MS);
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 1);
+#endif 
+
 		xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 		//	err = i2c_master_read_from_device(_i2cPort, SCD30_ADDRESS, (uint8_t *) &receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS /
 		//portTICK_PERIOD_MS);
 		err = i2c_master_receive(sps30DevHandle, (uint8_t *)&receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 		xSemaphoreGive(I2CSemaphore);
+
+	#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 0);
+#endif 	
 
 		if (err == ESP_OK) {
 			swapBytes((uint8_t *)&receivedBytes, sizeof(receivedBytes));
@@ -591,10 +631,17 @@ esp_err_t SCD30::sendCommand(uint16_t command, uint16_t arguments) {
 	data[3] = arguments & 0xFF;
 	data[4] = computeCRC8(&data[2], 2); // Calc CRC on the arguments only, not the command
 	// return i2c_master_write_to_device(_i2cPort, SCD30_ADDRESS, data, sizeof(data), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
-
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 1);
+#endif 
 	xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 	err = i2c_master_transmit(sps30DevHandle, (uint8_t *)&data, sizeof(data), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 	xSemaphoreGive(I2CSemaphore);
+
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 0);
+#endif 
+
 	return err;
 }
 
@@ -605,11 +652,17 @@ esp_err_t SCD30::sendCommand(uint16_t command) {
 		return ESP_OK;
 
 	swapBytes((uint8_t *)&command, sizeof(command));
-
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 1);
+#endif 
 	xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 	//	return i2c_master_write_to_device(_i2cPort, SCD30_ADDRESS, (uint8_t *)&command, sizeof(command), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 	err = i2c_master_transmit(sps30DevHandle, (uint8_t *)&command, sizeof(command), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 	xSemaphoreGive(I2CSemaphore);
+#ifdef TESTPOINTS 
+		gpio_set_level(RS485TX_PIN, 0);
+#endif 
+
 	return err;
 }
 

@@ -131,7 +131,7 @@ static esp_err_t panel_io_i2c_rx_buffer(esp_lcd_panel_io_t *io, int lcd_cmd, voi
     esp_err_t ret = ESP_OK;
     lcd_panel_io_i2c_t *i2c_panel_io = __containerof(io, lcd_panel_io_i2c_t, base);
     bool send_param = (lcd_cmd != -1);
-
+    xSemaphoreTakeFromISR(I2CSemaphore,&xHigherPriorityTaskWoken);
     if (send_param)
     {
         int write_size = 0;
@@ -201,7 +201,8 @@ static esp_err_t panel_io_i2c_tx_buffer(esp_lcd_panel_io_t *io, int lcd_cmd, con
         lcd_buffer = (uint8_t *)buffer;
         lcd_buffer_size = buffer_size;
     }
-
+    xSemaphoreTakeFromISR(I2CSemaphore,&xHigherPriorityTaskWoken);
+    
     i2c_master_transmit_multi_buffer_info_t lcd_i2c_buffer[3] = {
         {.write_buffer = &control_phase_byte, .buffer_size = control_phase_size},
         {.write_buffer = cmd_buffer, .buffer_size = cmd_buffer_size},

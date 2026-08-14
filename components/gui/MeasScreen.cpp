@@ -28,6 +28,9 @@
 	#define LV_VER_RES_MAX BSP_LCD_V_RES
 #endif
 
+#define SHOWSETPOINT 
+
+
 // fonts Ohm, micro  0x3A9,0x3BC 01234567890 -.,mMnkVAHz
 
 #define PADDING 12 // 8
@@ -68,7 +71,9 @@ MeasScreen::MeasScreen( ) {
 	statusLine = new StatusLine (backGround);
 	statusLine->setText( NULL);
 	navigArrows = new NavigArrows(backGround, true, true);
+	#ifdef SHOWSETPOINT
 	spinbox = new VerticalSpinbox( backGround,SPINBOXX,SPINBOXY,&spinBoxDescr);
+	#endif
 	
 
 //	setStatusIndicator(HEATING_ON);

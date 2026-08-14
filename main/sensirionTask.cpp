@@ -186,7 +186,9 @@ void sensirionTask(void *pvParameter) {
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 	// testLog();
 	while (1) {
-		vTaskDelay(10 / portTICK_PERIOD_MS);
+		//vTaskDelay(10 / portTICK_PERIOD_MS);
+		vTaskDelay(2 / portTICK_PERIOD_MS);
+
 		time(&now);
 		localtime_r(&now, &timeinfo);
 
