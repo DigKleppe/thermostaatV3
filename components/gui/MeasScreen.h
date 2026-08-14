@@ -23,6 +23,7 @@
 #include "NavigArrows.h"
 #include "StatusIndicator.h"
 #include "StatusLine.h"
+#include "VerticalSpinbox.h"
 
 #include "PID.h"
 
@@ -95,6 +96,7 @@ private:
 	ClockDisplay *clockDisplay;
 	MeasDisplay *measDisplay[NR_ITEMS];
 	StatusIndicator *statusIndicator;
+	VerticalSpinbox *spinbox;
 };
 
 #endif /* COMPONENTS_GUI_MEASSCREEN_H_ */

@@ -15,6 +15,7 @@
 #include "styles.h"
 #include "backGround.h"
 #include "lcd.h"
+#include "settings.h"
 
 #ifdef LV_CONF_INCLUDE_SIMPLE
 #include "lvgl.h"
@@ -30,9 +31,23 @@
 // fonts Ohm, micro  0x3A9,0x3BC 01234567890 -.,mMnkVAHz
 
 #define PADDING 12 // 8
-#define ITEMHEIGHT	80
+#define ITEMHEIGHT	100 // 80
 #define ITEMWIDTH	200
-#define FIRSTY 		80  //CLOCKDISPLAYHEIGHT
+#define FIRSTY 		60  //CLOCKDISPLAYHEIGHT
+#define SPINBOXX	380
+#define SPINBOXY	10
+
+
+
+static const SpinBoxDescr_t  spinBoxDescr = {
+												  .name = "Gewenste temperatuur:",
+												  .format = "%2.1f",
+												  .maxVal = 30.0,
+												  .minVal = 10.0,
+												  .step = 0.1,
+												  .var = &userSettings.temperatureSetpoint,
+											 };
+											
 
 //const char units[4][7] { "\xC2" "\xB0" "C", "%RH",  "ppm","" };
 static const char * units[] = { "\xC2\xB0" "C", "%" ,"ppm"};
@@ -53,6 +68,8 @@ MeasScreen::MeasScreen( ) {
 	statusLine = new StatusLine (backGround);
 	statusLine->setText( NULL);
 	navigArrows = new NavigArrows(backGround, true, true);
+	spinbox = new VerticalSpinbox( backGround,SPINBOXX,SPINBOXY,&spinBoxDescr);
+	
 
 //	setStatusIndicator(HEATING_ON);
 

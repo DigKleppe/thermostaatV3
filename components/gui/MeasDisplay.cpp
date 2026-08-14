@@ -11,6 +11,7 @@
 #define PADDING 16
 #define ITEMHEIGHT	95
 #define VALUEWIDTH	200
+#define XPOS		30  // rel to name
 #define FIRSTY 		CLOCKDISPLAYHEIGHT
 
 MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char * unit, const char * formatStr)
@@ -36,7 +37,7 @@ MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char
 		lv_area_t c;
 		lv_obj_get_coords(nameLabel, &c);
 	//	lv_obj_set_pos(valueLabel, 10,c.y2 + PADDING + y);
-		lv_obj_set_pos(valueLabel, 70,c.y1 -20 + y);
+		lv_obj_set_pos(valueLabel, XPOS,c.y1 -20 + y);
 	}
 	else
 		lv_obj_set_pos(valueLabel, 10,y);

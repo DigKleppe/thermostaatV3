@@ -106,7 +106,7 @@ dependencies:
   idf:
     source:
       type: idf
-    version: 5.5.4
+    version: 6.0.2
   lvgl/lvgl:
     component_hash: d7c1ac037ae6e85d94897f807d6e7ba0946a83e720074fc95a4f6241da9f9f53
     dependencies: []
@@ -170,4 +170,4 @@ direct_dependencies:
 - waveshare/esp32_s3_touch_lcd_4
 manifest_hash: 0655e32078022dae16d5b5ff40dbd0b1e49f9b7b492a4137a8684b84fe9662b4
 target: esp32s3
-version: 2.0.0
+version: 3.0.0

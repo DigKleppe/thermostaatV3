@@ -7,3 +7,4 @@ set(PROJECT_VER "1.0.0.0")
 project(${ProjectId})
 idf_build_set_property(COMPILE_OPTIONS "-Wno-error" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-DLV_LVGL_H_INCLUDE_SIMPLE" APPEND)
+

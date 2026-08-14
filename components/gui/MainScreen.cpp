@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define PADDING 20
+//#define PADDING 30
 #define ITEMHEIGHT 95
 #define ITEMWIDTH 300
 
