@@ -150,13 +150,22 @@ static const char *TAG = "wifiConnect";
 
 int getRssi(void) {
 	wifi_ap_record_t ap_info;
-	if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-		return ap_info.rssi;
-	} else {
-		ESP_LOGE(TAG, "Failed to get AP info");
+	int rssi = 0;
+	switch (connectStatus) {
+	case CONNECT_READY:
+	case CONNECTED:
+		if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+			rssi = ap_info.rssi;
+		} else {
+			ESP_LOGE(TAG, "Failed to get AP info");
+		}
+		break;
+	default:
 		return 0;
 	}
+	return rssi;
 }
+
 static esp_err_t set_dns_server(esp_netif_t *netif, uint32_t addr, esp_netif_dns_type_t type) {
 	if (addr && (addr != IPADDR_NONE)) {
 		esp_netif_dns_info_t dns;
@@ -490,7 +499,7 @@ void connectTask(void *pvParameters) {
 					connectStatus = WPS_ACTIVE;
 					ESP_LOGI(TAG, "WPS Active");
 					ESP_ERROR_CHECK(esp_wifi_wps_enable(&wpsConfig));
-					ESP_ERROR_CHECK(esp_wifi_wps_start());
+					ESP_ERROR_CHECK(esp_wifi_wps_start(0));
 					wpsActive = true;
 					timeOutCounter = (WPS_TIMEOUTTIME * 1000);
 				} else {
@@ -536,12 +545,11 @@ void connectTask(void *pvParameters) {
 			case WPS_TIMEOUT: {
 				ESP_LOGE(TAG, "WPS timeout");
 				esp_wifi_wps_disable();
-				connectStep = 50; // try softap
-
-				// s_retry_num = 0;
-				// esp_wifi_connect();
-				// connectStatus = CONNECTING;
-				// connectStep = 1;
+			//	connectStep = 50; // try softap
+				s_retry_num = 0;
+				esp_wifi_connect();
+				connectStatus = CONNECTING;
+				connectStep = 1;
 			} break;
 
 			default:
@@ -581,7 +589,7 @@ void connectTask(void *pvParameters) {
 					updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
 					if (staticIPisSet) {
 						staticIPisSet = false;
-					//	updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
+						//	updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
 						forceUpdate = false;
 						connectStep = 40;
 						connectStatus = CHECKFIRMWARE; // CONNECTING
@@ -592,9 +600,8 @@ void connectTask(void *pvParameters) {
 						} else
 							ESP_LOGE(TAG, " error dhcp start");
 						esp_wifi_connect();
-					}
-					else  { // no need to reconnect 
-						connectStep = 40; // go on check update 
+					} else {			  // no need to reconnect
+						connectStep = 40; // go on check update
 					}
 				} else {
 					if (!staticIPisSet && (advSettings.fixedIPdigit > 0)) {
@@ -684,9 +691,3 @@ void wifiConnect(void) {
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
 void restartWifi(void) { connectRestart = true; }
-
-
-
-
-
-

@@ -51,7 +51,7 @@ void autoCalTask(void *pvParameters) {
 			if (udpMssg.mssg) {
 				ESP_LOGI(TAG, "%s", udpMssg.mssg);
 				sscanf(udpMssg.mssg, "S%d,%f,%f,%f,%d", &sensorNr, &calMssg.co2, &calMssg.temperature, &calMssg.hum, &calMssg.rssi);
-				if ( sensorNr != 0) // check 
+				if (sensorNr != 0) // check
 					calMssg.co2 = 0;
 
 				free(udpMssg.mssg);
@@ -66,50 +66,46 @@ void autoCalTask(void *pvParameters) {
 		if (lastminute != timeinfo.tm_min) {
 			lastminute = timeinfo.tm_min;
 			minuteTmr--;
-			if ( minuteTmr == 1)
-				calMssg.co2	= 0; // only fresh message.. 
+			if (minuteTmr == 1)
+				calMssg.co2 = 0; // only fresh message..
 			if (minuteTmr == 0) {
 				minuteTmr = CHECKINTERVAL;
 				if (calMssg.co2) { // then my calibrator is in the air...
 					getAvgMeasValues(&actualValues);
 
-					dev = actualValues.co2 - calMssg.co2;	// check CO2
+					dev = actualValues.co2 - calMssg.co2; // check CO2
 					dev = abs(dev);
 					if (dev > 10.0) {
 						calValues.CO2 = calMssg.co2; // sensor will be updated in sensirionTask
-						ESP_LOGI(TAG, "CO2 sensor calibrated %1.2f" , dev);
+						ESP_LOGI(TAG, "CO2 sensor calibrated %1.2f", dev);
 						calvaluesReceived = true;
-					}
-					else
+					} else
 						ESP_LOGI(TAG, "CO2 sensor OK %1.2f %%", dev);
 					calMssg.co2 = 0;
 
-					dev = actualValues.temperature - calMssg.temperature; // check temperature
+					dev = actualValues.temperature - userSettings.temperatureOffset - calMssg.temperature; // check temperature
 					dev = abs(dev);
-					if ( dev  > 0.1) {
+					if (dev > 0.1) {
 						userSettings.temperatureOffset = actualValues.temperature - calMssg.temperature;
 						ESP_LOGI(TAG, "temperature sensor calibrated %1.2f C", dev);
 						save = true;
-					}
-					else
+					} else
 						ESP_LOGI(TAG, "temperature sensor OK %1.2f %%", dev);
 
-					dev = actualValues.hum-calMssg.hum;  // checkRH
+					dev = actualValues.hum - userSettings.RHoffset - calMssg.hum; // checkRH
 					dev = abs(dev);
-					if ( dev  > 2) {
+					if (dev > 2) {
 						userSettings.RHoffset = actualValues.hum - calMssg.hum;
 						ESP_LOGI(TAG, "RH sensor calibrated %1.2f %%", dev);
 						save = true;
-					}
-					else
+					} else
 						ESP_LOGI(TAG, "RH sensor OK %1.2f %%", dev);
-					if ( save) {
+					if (save) {
 						save = false;
 						saveSettings();
-				}
+					}
 				}
 			}
 		}
-
 	}
 }

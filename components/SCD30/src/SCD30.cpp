@@ -40,7 +40,12 @@
 
 #if defined(__has_include)
 #if __has_include(<esp_log.h>)
+
+#define LOG_LOCAL_LEVEL ESP_LOG_NONE
+
 #include <esp_log.h>
+
+
 #elif __has_include("esp_log.h")
 #include "esp_log.h"
 #else

@@ -45,6 +45,8 @@ extern int rssi;
 
 const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
+								{"Temp. offset:","%1.1f",& userSettings.temperatureOffset},
+								{"RH offset:","%1.1f",& userSettings.RHoffset},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTime},

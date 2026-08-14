@@ -5,6 +5,8 @@
  *      Author: dig
  */
 
+//#define LOG_LOCAL_LEVEL ESP_LOG_NONE
+
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -179,6 +181,8 @@ void sensirionTask(void *pvParameter) {
 	sensirionError = false;
 	sensirionTimeoutTimer = SCD30_TIMEOUT;
 
+	vTaskDelay(2000 / portTICK_PERIOD_MS); // reject first samples
+
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 	// testLog();
 	while (1) {
@@ -205,10 +209,10 @@ void sensirionTask(void *pvParameter) {
 		}
 		if (airSensor.readMeasurement() == ESP_OK) {
 			sensirionTimeoutTimer = SCD30_TIMEOUT;
-			lastVal.co2 = 999;								  // airSensor.getCO2();
+			lastVal.co2 = airSensor.getCO2();
 			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
 			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
-			if (lastVal.co2 > 350) {						  // first measurement invalid, reject
+			if (lastVal.co2 > 350)  {						  // first measurement invalid, reject
 				co2Averager.write(lastVal.co2 * 1000.0);
 				tempAverager.write(lastVal.temperature * 1000.0);
 				humAverager.write(lastVal.hum * 1000.0);
@@ -224,6 +228,7 @@ void sensirionTask(void *pvParameter) {
 				switch (n) {
 				case 0:
 					sprintf(displayStr[n], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
+				ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature ,userSettings.temperatureOffset);
 					break;
 				case 1:
 					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);

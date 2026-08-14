@@ -128,7 +128,6 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-
 int httpsReadFile(char *url, char *dest, int maxChars) {
 	int read_len =0, content_length, status;
 
