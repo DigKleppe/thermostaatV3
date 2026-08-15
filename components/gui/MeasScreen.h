@@ -32,6 +32,9 @@
 
 #define NR_ITEMS 3
 
+
+//#define SHOWSETPOINT 
+
 class MeasScreen { // public Stream{
 public:
 	MeasScreen();

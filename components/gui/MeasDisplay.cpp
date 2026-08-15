@@ -11,7 +11,7 @@
 #define PADDING 16
 #define ITEMHEIGHT	95
 #define VALUEWIDTH	200
-#define XPOS		30  // rel to name
+#define XPOS		70 // 30 met spin  // rel to name
 #define FIRSTY 		CLOCKDISPLAYHEIGHT
 
 MeasDisplay::MeasDisplay( lv_obj_t * parent, int y, const char *name, const char * unit, const char * formatStr)

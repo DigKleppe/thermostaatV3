@@ -28,7 +28,6 @@
 	#define LV_VER_RES_MAX BSP_LCD_V_RES
 #endif
 
-#define SHOWSETPOINT 
 
 
 // fonts Ohm, micro  0x3A9,0x3BC 01234567890 -.,mMnkVAHz
@@ -40,7 +39,7 @@
 #define SPINBOXX	380
 #define SPINBOXY	10
 
-
+#ifdef SHOWSETPOINT 
 
 static const SpinBoxDescr_t  spinBoxDescr = {
 												  .name = "Gewenste temperatuur:",
@@ -50,7 +49,7 @@ static const SpinBoxDescr_t  spinBoxDescr = {
 												  .step = 0.1,
 												  .var = &userSettings.temperatureSetpoint,
 											 };
-											
+#endif											
 
 //const char units[4][7] { "\xC2" "\xB0" "C", "%RH",  "ppm","" };
 static const char * units[] = { "\xC2\xB0" "C", "%" ,"ppm"};
