@@ -25,6 +25,9 @@
 
 static const char *TAG = "lcd_panel.io.i2c";
 
+
+void sensorTask (void *pvParameter); 
+
 extern SemaphoreHandle_t I2CSemaphore; // used by lvgl, shares the same bus
 
 #define BYTESHIFT(VAR, IDX) (((VAR) >> ((IDX) * 8)) & 0xFF)
@@ -158,6 +161,8 @@ static esp_err_t panel_io_i2c_rx_buffer(esp_lcd_panel_io_t *io, int lcd_cmd, voi
     }
     xSemaphoreGiveFromISR(I2CSemaphore, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+
     return ESP_OK;
 err:
     xSemaphoreGiveFromISR(I2CSemaphore, &xHigherPriorityTaskWoken);
@@ -225,6 +230,7 @@ static esp_err_t panel_io_i2c_tx_buffer(esp_lcd_panel_io_t *io, int lcd_cmd, con
 err:
     xSemaphoreGiveFromISR(I2CSemaphore, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  
     return ret;
 }
 

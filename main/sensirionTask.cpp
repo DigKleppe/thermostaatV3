@@ -5,13 +5,15 @@
  *      Author: dig
  */
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_NONE
+// #define LOG_LOCAL_LEVEL ESP_LOG_NONE
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "CGIcommonScripts.h"
+#include "ClockDisplay.h"
 #include "PID.h"
 #include "SCD30.h"
 #include "averager.h"
@@ -22,11 +24,16 @@
 #include "settings.h"
 #include "udpClient.h"
 #include "wifiConnect.h"
-#include "ClockDisplay.h"
-#include "CGIcommonScripts.h"
 
 #include <math.h>
 #include <string.h>
+
+#define TESTPOINTS
+#ifdef TESTPOINTS
+#define RS485DE_PIN GPIO_NUM_6	// CANtx
+#define RS485TX_PIN GPIO_NUM_44 // RX0
+#include "driver/gpio.h"
+#endif
 
 #define MAXRETRIES 5
 #define UDPTXPORT 5050
@@ -34,15 +41,15 @@
 #define SCD30_TIMEOUT 2500 // * 10ms
 #define CO2AUTOCALTIME 15  // minutes
 
-#define NR_SENSORVALUES		3 
-
-// #define SIMULATE
+#define RETRYCNTS 100;
+#define NR_SENSORVALUES 3
 
 static const char *TAG = "sensirionTask";
 
 extern int scriptState;
 extern int moduleNr;
 
+extern i2c_master_bus_handle_t i2CmasterBusHandle;
 #define MAXLOGVALUES (24 * 60)
 
 static log_t lastVal;
@@ -65,6 +72,10 @@ float getTemperature(void) { return lastVal.temperature; }
 const char *getFirmWareVersion();
 void setPWM(int perc);
 
+i2c_master_bus_handle_t bsp_i2c_get_handle(void);
+
+i2c_master_bus_handle_t busHandle;
+
 void testLog(void) {
 	int logTxIdx = 0;
 	for (int p = 0; p < 20; p++) {
@@ -77,40 +88,225 @@ void testLog(void) {
 			logTxIdx = 0;
 	}
 }
-esp_err_t initSCD30(void) {
-	int retries = 0;
+// esp_err_t initSCD30(void) {
+// 	int retries = 0;
 
-	retries = MAXRETRIES;
+// 	retries = MAXRETRIES;
+// 	esp_err_t err;
+
+// 	vTaskDelay(2000 / portTICK_PERIOD_MS); // boot up time = 2 seconds
+
+// 	do {
+// 		err = airSensor.setMeasurementInterval(MEASINTERVAL);
+// 		retriestotal++;
+// 	} while (err != ESP_OK && (retries-- > 0));
+// 	vTaskDelay(100 / portTICK_PERIOD_MS); // wait for SCD30 to be ready
+// 	if (err == ESP_OK) {
+// 		retries = MAXRETRIES;
+// 		do {
+// 			err = airSensor.setAutoSelfCalibration(false); // disable ASC
+// 			retriestotal++;
+// 		} while (err != ESP_OK && (retries-- > 0));
+// 	}
+
+// 	if (err == ESP_OK) {
+// 		retries = MAXRETRIES;
+// 		do {
+// 			err = airSensor.beginMeasuring(0);
+// 			retriestotal++;
+// 		} while (err != ESP_OK && (retries-- > 0));
+// 	}
+// 	ESP_LOGI(TAG, "retriestotal: %d", retriestotal);
+// 	if (err == ESP_OK)
+// 		ESP_LOGI(TAG, "initialized");
+// 	else
+// 		ESP_LOGE(TAG, "Error initializing!");
+// 	return err;
+// }
+
+#define SENSORSAMPLINGPERIOD (5000 / portTICK_PERIOD_MS)
+
+// called from panel_io_i2c_rx_buffer every CONFIG_LV_INDEV_DEF_READ_PERIOD (default 30ms)
+extern "C" void sensorTask(void *pvParameter) {
+	static int step = 0;
+	static int line;
+	static int retryCntr = RETRYCNTS;
+	static displayMssg_t displayMssg;
+	static char displayStr[NR_SENSORVALUES][80];
+	static time_t now = 0;
+	static struct tm timeinfo;
+	static int lastminute = -1;
+	static int co2autoCalTimer = CO2AUTOCALTIME;
+	static int sensirionTimeoutTimer = SCD30_TIMEOUT;
+	static int prescaler = (SENSORSAMPLINGPERIOD / CONFIG_LV_INDEV_DEF_READ_PERIOD);
 	esp_err_t err;
 
-	vTaskDelay(2000 / portTICK_PERIOD_MS); // boot up time = 2 seconds
+	if (prescaler-- > 0) {
+		return;
+	}
+	prescaler = (SENSORSAMPLINGPERIOD / CONFIG_LV_INDEV_DEF_READ_PERIOD);
 
-	do {
+#ifdef TESTPOINTS
+	gpio_set_level(RS485TX_PIN, 1);
+	ESP_LOGE(TAG, "step %d", step);
+
+#endif
+	switch (step) {
+	case 0:
+#ifdef TESTPOINTS
+
+		ESP_LOGE(TAG, "TESTPOINTS ON!");
+#endif
+
+		ESP_LOGI(TAG, "Starting SCD30 task");
+		displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
+		displayMssg.str2 = NULL;
+		co2Averager.setAverages(AVERAGES);
+		tempAverager.setAverages(AVERAGES);
+		humAverager.setAverages(AVERAGES);
+		if (i2CmasterBusHandle) { // set by bsp -lvgl
+			if (airSensor.begin(i2CmasterBusHandle, false, false) == ESP_OK)
+				step++;
+			else {
+				step = 100;
+				ESP_LOGE(TAG, "Airsensor not detected");
+			}
+		}
+		break;
+
+	case 1:
 		err = airSensor.setMeasurementInterval(MEASINTERVAL);
-		retriestotal++;
-	} while (err != ESP_OK && (retries-- > 0));
-	vTaskDelay(100 / portTICK_PERIOD_MS); // wait for SCD30 to be ready
-	if (err == ESP_OK) {
-		retries = MAXRETRIES;
-		do {
-			err = airSensor.setAutoSelfCalibration(false); // disable ASC
-			retriestotal++;
-		} while (err != ESP_OK && (retries-- > 0));
-	}
+		if (err == ESP_OK) {
+			step++;
+		} else {
+			ESP_LOGE(TAG, "Airsensor setMeasurementInterval failed");
+			step = 100; // error
+		}
+		break;
 
-	if (err == ESP_OK) {
-		retries = MAXRETRIES;
-		do {
-			err = airSensor.beginMeasuring(0);
-			retriestotal++;
-		} while (err != ESP_OK && (retries-- > 0));
+	case 2:
+		err = airSensor.setAutoSelfCalibration(false); // disable ASC
+		if (err == ESP_OK) {
+			step++;
+		} else {
+			ESP_LOGE(TAG, "Airsensor setAutoSelfCalibration failed");
+			step = 100; // error
+		}
+		break;
+
+	case 3:
+		err = airSensor.beginMeasuring(0);
+		if (err == ESP_OK) {
+			step++;
+		} else {
+			ESP_LOGE(TAG, "Airsensor beginMeasuring failed");
+			step = 100; // error
+		}
+		break;
+
+	case 4:
+		if (airSensor.readMeasurement() == ESP_OK) {
+			sensirionTimeoutTimer = SCD30_TIMEOUT;
+			lastVal.co2 = airSensor.getCO2();
+			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
+			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
+			if (lastVal.co2 > 350) {						  // first measurement invalid, reject
+				co2Averager.write(lastVal.co2 * 1000.0);
+				tempAverager.write(lastVal.temperature * 1000.0);
+				humAverager.write(lastVal.hum * 1000.0);
+			}
+			updatePID(lastVal.temperature);
+			line = 0;
+			step++;
+		} else {
+			if (sensirionTimeoutTimer-- <= 0) {
+				ESP_LOGI(TAG, "Sensor timeout");
+				step = 100;
+			}
+			break;
+
+		case 5: // print sensorvalues line by line
+			for (line = 0; line < NR_SENSORVALUES; line++) {
+				displayMssg.line = line;
+				displayMssg.str1 = displayStr[line];
+				switch (line) {
+				case 0:
+					sprintf(displayStr[line], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
+					ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature, userSettings.temperatureOffset);
+					break;
+				case 1:
+					sprintf(displayStr[line], "%2.1f", lastVal.hum - userSettings.RHoffset);
+					break;
+				case 2:
+					if (lastVal.co2 > 9999) // error sensor
+						sprintf(displayStr[line], "----");
+					else
+						sprintf(displayStr[line], "%2.0f", lastVal.co2);
+				}
+
+				if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
+					ESP_LOGE(TAG, "to");
+			}
+			// line++;
+		//	if (line >= NR_SENSORVALUES) {
+				addToLog(avgVal); // add to cyclic log buffer
+				step = 4;		  // next measure cycle
+		//	}
+			break;
+
+		case 100: // error r
+			retryCntr = RETRYCNTS;
+			sensirionError = true;
+			step++;
+			break;
+
+		case 101:
+			if (retryCntr-- <= 0)
+				step = 0; // retry connection
+			break;
+
+		default:
+			step = 0;
+
+		} // end switch step
+
+		if (lastminute != timeinfo.tm_min) {
+			avgVal.co2 = co2Averager.average() / 1000.0;
+			avgVal.temperature = tempAverager.average() / 1000.0;
+			avgVal.hum = humAverager.average() / 1000.0;
+			avgVal.timeStamp = timeStamp;
+			addToLog(avgVal);			  // add to cyclic log buffer
+			lastminute = timeinfo.tm_min; // every minute
+			ESP_LOGI(TAG, "CO2 value: %f ", avgVal.co2);
+			if (userSettings.isCalibrated && (avgVal.co2 < 400)) {
+				if (co2autoCalTimer > 0)
+					co2autoCalTimer--;
+				else {
+					ESP_LOGI(TAG, "CO2 value too low, Calibrate");
+					airSensor.setForcedRecalibrationFactor(410);
+					co2autoCalTimer = CO2AUTOCALTIME;
+					co2Averager.clear();
+				}
+			} else
+				co2autoCalTimer = CO2AUTOCALTIME;
+		}
+
+		if (calvaluesReceived) {
+			calvaluesReceived = false;
+			if (calValues.CO2 != NOCAL) { // then real CO2 received
+				airSensor.setForcedRecalibrationFactor(calValues.CO2);
+				if (!userSettings.isCalibrated) {
+					userSettings.isCalibrated = true;
+					saveSettings();
+				}
+				calValues.CO2 = NOCAL;
+			}
+		}
+
+#ifdef TESTPOINTS
+		gpio_set_level(RS485TX_PIN, 0);
+#endif
 	}
-	ESP_LOGI(TAG, "retriestotal: %d", retriestotal);
-	if (err == ESP_OK)
-		ESP_LOGI(TAG, "initialized");
-	else
-		ESP_LOGE(TAG, "Error initializing!");
-	return err;
 }
 
 // sends averaged values at  11,21,31 for module 1  12, 22 for module 2 etc
@@ -144,151 +340,73 @@ void updTransmitTask(void *pvParameter) {
 	}
 }
 
-void sensirionTask(void *pvParameter) {
-	displayMssg_t displayMssg;
-	char displayStr[NR_SENSORVALUES][80];
-	int dummy;
-	time_t now = 0;
-	struct tm timeinfo;
-	int lastminute = -1;
-	int co2autoCalTimer = CO2AUTOCALTIME;
-	int sensirionTimeoutTimer = SCD30_TIMEOUT;
+//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);
 
-	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
-	displayMssg.str2 = NULL;
+// ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
 
-	i2c_master_bus_handle_t I2CbusHandle = (i2c_master_bus_handle_t)pvParameter;
+// 			for (int n = 0; n < NR_SENSORVALUES; n++) {
+// 				displayMssg.line = n;
+// 				displayMssg.str1 = displayStr[n];
+// 				switch (n) {
+// 				case 0:
+// 					sprintf(displayStr[n], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
+// 				ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature ,userSettings.temperatureOffset);
+// 					break;
+// 				case 1:
+// 					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);
+// 					break;
+// 				case 2:
+// 					if (lastVal.co2 > 9999) // error sensor
+// 						sprintf(displayStr[n], "----");
+// 					else
+// 						sprintf(displayStr[n], "%2.0f", lastVal.co2);
+// 					break;
+// 				}
+// 				if( xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS )
+// 					ESP_LOGE(TAG, "to");
 
-	ESP_LOGI(TAG, "Starting SCD30 task");
+// 			//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);
+// 			}
 
-	co2Averager.setAverages(AVERAGES);
-	tempAverager.setAverages(AVERAGES);
-	humAverager.setAverages(AVERAGES);
+// #ifdef TURBO_MODE
+// 			addToLog(avgVal); // add to cyclic log buffer
+// #else
+// 			if (lastminute != timeinfo.tm_min) {
+// 				avgVal.co2 = co2Averager.average() / 1000.0;
+// 				avgVal.temperature = tempAverager.average() / 1000.0;
+// 				avgVal.hum = humAverager.average() / 1000.0;
+// 				avgVal.timeStamp = timeStamp;
+// 				addToLog(avgVal);			  // add to cyclic log buffer
+// 				lastminute = timeinfo.tm_min; // every minute
+// 				ESP_LOGI(TAG, "CO2 value: %f ", avgVal.co2);
+// 				if (userSettings.isCalibrated && (avgVal.co2 < 400)) {
+// 					if (co2autoCalTimer > 0)
+// 						co2autoCalTimer--;
+// 					else {
+// 						ESP_LOGI(TAG, "CO2 value too low, Calibrate");
+// 						airSensor.setForcedRecalibrationFactor(410);
+// 						co2autoCalTimer = CO2AUTOCALTIME;
+// 						co2Averager.clear();
+// 					}
+// 				} else
+// 					co2autoCalTimer = CO2AUTOCALTIME;
+// 			}
+// #endif
+// 		}
+// 		if (calvaluesReceived) {
+// 			calvaluesReceived = false;
+// 			if (calValues.CO2 != NOCAL) { // then real CO2 received
+// 				airSensor.setForcedRecalibrationFactor(calValues.CO2);
+// 				if (!userSettings.isCalibrated) {
+// 					userSettings.isCalibrated = true;
+// 					saveSettings();
+// 				}
+// 				calValues.CO2 = NOCAL;
+// 			}
+// 		}
 
-	while ((airSensor.begin(I2CbusHandle, false, false) != ESP_OK) && (sensirionTimeoutTimer-- > 0)) {
-		airSensor.reset();
-		resets++;
-		sensirionError = true;
-		ESP_LOGE(TAG, "Air sensor not detected");
-		vTaskDelay(200 / portTICK_PERIOD_MS);
-	}
-
-	while (initSCD30() != ESP_OK) {
-		sensirionError = true;
-		vTaskDelay(200 / portTICK_PERIOD_MS);
-		ESP_LOGE(TAG, "Error init Air sensor");
-	}
-	sensirionError = false;
-	sensirionTimeoutTimer = SCD30_TIMEOUT;
-
-	vTaskDelay(2000 / portTICK_PERIOD_MS); // reject first samples
-
-	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
-	// testLog();
-	while (1) {
-		//vTaskDelay(10 / portTICK_PERIOD_MS);
-		vTaskDelay(2 / portTICK_PERIOD_MS);
-
-		time(&now);
-		localtime_r(&now, &timeinfo);
-
-		if (sensirionError)
-			sensirionTimeoutTimer = 1; //
-		if (sensirionTimeoutTimer-- == 0) {
-			ESP_LOGE(TAG, "Air sensor timeout");
-			resets++;
-			airSensor.reset();
-			if (initSCD30() != ESP_OK)
-				sensirionError = true;
-			else
-				sensirionError = false;
-
-			sensirionTimeoutTimer = SCD30_TIMEOUT;
-			while ((airSensor.begin(I2CbusHandle, false, false) != ESP_OK) && (sensirionTimeoutTimer-- > 0))
-				;
-
-			vTaskDelay(200 / portTICK_PERIOD_MS);
-		}
-		if (airSensor.readMeasurement() == ESP_OK) {
-			sensirionTimeoutTimer = SCD30_TIMEOUT;
-			lastVal.co2 = airSensor.getCO2();
-			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
-			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
-			if (lastVal.co2 > 350)  {						  // first measurement invalid, reject
-				co2Averager.write(lastVal.co2 * 1000.0);
-				tempAverager.write(lastVal.temperature * 1000.0);
-				humAverager.write(lastVal.hum * 1000.0);
-			}
-
-			updatePID(lastVal.temperature);
-
-			//ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
-
-			for (int n = 0; n < NR_SENSORVALUES; n++) {
-				displayMssg.line = n;
-				displayMssg.str1 = displayStr[n];
-				switch (n) {
-				case 0:
-					sprintf(displayStr[n], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
-				ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature ,userSettings.temperatureOffset);
-					break;
-				case 1:
-					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);
-					break;
-				case 2:
-					if (lastVal.co2 > 9999) // error sensor
-						sprintf(displayStr[n], "----");
-					else
-						sprintf(displayStr[n], "%2.0f", lastVal.co2);
-					break;
-				}
-				if( xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS )
-					ESP_LOGE(TAG, "to");
-
-			//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);	
-			}
-
-#ifdef TURBO_MODE
-			addToLog(avgVal); // add to cyclic log buffer
-#else
-			if (lastminute != timeinfo.tm_min) {
-				avgVal.co2 = co2Averager.average() / 1000.0;
-				avgVal.temperature = tempAverager.average() / 1000.0;
-				avgVal.hum = humAverager.average() / 1000.0;
-				avgVal.timeStamp = timeStamp;
-				addToLog(avgVal);			  // add to cyclic log buffer
-				lastminute = timeinfo.tm_min; // every minute
-				ESP_LOGI(TAG, "CO2 value: %f ", avgVal.co2);
-				if (userSettings.isCalibrated && (avgVal.co2 < 400)) {
-					if (co2autoCalTimer > 0)
-						co2autoCalTimer--;
-					else {
-						ESP_LOGI(TAG, "CO2 value too low, Calibrate");
-						airSensor.setForcedRecalibrationFactor(410);
-						co2autoCalTimer = CO2AUTOCALTIME;
-						co2Averager.clear();
-					}
-				} else
-					co2autoCalTimer = CO2AUTOCALTIME;
-			}
-#endif
-		}
-		if (calvaluesReceived) {
-			calvaluesReceived = false;
-			if (calValues.CO2 != NOCAL) { // then real CO2 received
-				airSensor.setForcedRecalibrationFactor(calValues.CO2);
-				if (!userSettings.isCalibrated) {
-					userSettings.isCalibrated = true;
-					saveSettings();
-				}
-				calValues.CO2 = NOCAL;
-			}
-		}
-
-	} // end while(1)
-} // end sensirionTask
-
-
+// 	} // end while(1)
+// } // end sensirionTask
 
 void getAvgMeasValues(sensorMssg_t *dest) {
 	dest->co2 = avgVal.co2;
@@ -297,8 +415,6 @@ void getAvgMeasValues(sensorMssg_t *dest) {
 }
 
 // CGI stuff
-
-
 
 int printLog(log_t *logToPrint, char *pBuffer) {
 	int len;
@@ -452,4 +568,3 @@ void parseCGIWriteData(char *buf, int received) {
 	if (save)
 		saveSettings();
 }
-

@@ -58,7 +58,7 @@ int saveSettingsScript (char *pBuffer, int count);
 int cancelSettingsScript (char *pBuffer, int count);
 int calibrateRespScript(char *pBuffer, int count);
 
-void sensirionTask(void *pvParameter);
-
+//void sensirionTask(void *pvParameter);
+void updTransmitTask(void *pvParameter);
 
 #endif /* MAIN_INCLUDE_SENSIRIONTASK_H_ */

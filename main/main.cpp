@@ -100,9 +100,12 @@ uint32_t timeStamp =1;
 extern "C" {
 #endif
 const char *dummycp;
+
+i2c_master_bus_handle_t i2CmasterBusHandle = NULL;  // set by bsp 
+
 void app_main(void) {
 	esp_err_t err;
-	i2c_master_bus_handle_t i2CmasterBusHandle = NULL;
+
 	int minuteCntr = 0;
 	char str[30];
 	char str2[25];
@@ -116,6 +119,8 @@ void app_main(void) {
 
 	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
+
+	gpio_set_level(RS485DE_PIN, 1);
 
 // uses RS485 outputsconnected tp optocouplers for heating and cooling valve
 // T6 removed , pin 1 U6 connected to pin2/3 U7 
@@ -156,11 +161,14 @@ void app_main(void) {
 
 	bsp_display_lock(0);
 	i2CmasterBusHandle = bsp_i2c_get_handle();
+
+
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 4 * 1024, NULL, 0, NULL);
-	xTaskCreate(sensirionTask, "sensirionTask", 4 * 1024, i2CmasterBusHandle, 0, &SensirionTaskh);
+//TaskCreate(sensirionTask, "sensirionTask", 4 * 1024, i2CmasterBusHandle, 0, &SensirionTaskh);
 	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
+	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 
 	bsp_display_brightness_set(userSettings.backLight);
 	bsp_display_unlock();
