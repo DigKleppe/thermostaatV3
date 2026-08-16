@@ -120,7 +120,7 @@ void app_main(void) {
 	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
 
-	gpio_set_level(RS485DE_PIN, 1);
+
 
 // uses RS485 outputsconnected tp optocouplers for heating and cooling valve
 // T6 removed , pin 1 U6 connected to pin2/3 U7 
