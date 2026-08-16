@@ -15,7 +15,7 @@
 // RS485A   koeling
 // RS485B   verwarming
 
-#define RS485DE_PIN     GPIO_NUM_6   // CANtx      
+#define RS485DE_PIN     GPIO_NUM_4   // wire to pin 4 ESP32 WROOM 
 #define RS485TX_PIN     GPIO_NUM_44  // RX0    
 
 

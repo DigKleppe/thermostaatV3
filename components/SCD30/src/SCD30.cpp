@@ -29,7 +29,7 @@
 
 //#define TESTPOINTS
 #ifdef TESTPOINTS 
-#define RS485DE_PIN     GPIO_NUM_6   // CANtx      
+#define RS485DE_PIN     GPIO_NUM_4   // CANtx      
 #define RS485TX_PIN     GPIO_NUM_44  // RX0  
 #include "driver/gpio.h"  
 #endif 
@@ -211,10 +211,7 @@ esp_err_t SCD30::begin(i2c_master_bus_handle_t I2CbusHandle, bool autoCalibrate,
 		.device_address = SCD30_ADDRESS,
 		.scl_speed_hz = SCD30CLK,
 	};
-//	xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
-
 	err = i2c_master_bus_add_device(I2CbusHandle, &dev_cfg, &sps30DevHandle);
-//	xSemaphoreGive(I2CSemaphore);
 	if (err != ESP_OK) {
 		ESP_LOGE(TAG, "Error adding SCD30 to I2Cbus");
 		return err;
@@ -437,19 +434,18 @@ esp_err_t SCD30::readMeasurement() {
 	ByteToFl tempTemperature;
 	tempTemperature.value = 0;
 	uint8_t write_buf[2] = {COMMAND_READ_MEASUREMENT >> 8, COMMAND_READ_MEASUREMENT & 0xF};
-//	xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
 	// err = i2c_master_write_to_device(_i2cPort, SCD30_ADDRESS, write_buf, sizeof(write_buf), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 	err = i2c_master_transmit(sps30DevHandle, (uint8_t *)&write_buf, sizeof(write_buf), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
-//	xSemaphoreGive(I2CSemaphore);
+
 
 	if (err != ESP_OK)
 		return err;
 
 	vTaskDelay(3 / portTICK_PERIOD_MS);
-//	xSemaphoreTake(I2CSemaphore, portMAX_DELAY);
+
 	// err = i2c_master_read_from_device(_i2cPort, SCD30_ADDRESS, receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 	err = i2c_master_receive(sps30DevHandle, receivedBytes, sizeof(receivedBytes), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
-//	xSemaphoreGive(I2CSemaphore);
+
 	if (err != ESP_OK)
 		return err;
 

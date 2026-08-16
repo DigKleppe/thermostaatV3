@@ -1,4 +1,3 @@
-
 #include "autoCalTask.h"
 #include "clockTask.h"
 #include "driver/gpio.h"
@@ -19,6 +18,7 @@
 #include "updateTask.h"
 #include "wifiConnect.h"
 #include "PID.h"
+#include "i2c.h"
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
@@ -101,7 +101,6 @@ extern "C" {
 #endif
 const char *dummycp;
 
-i2c_master_bus_handle_t i2CmasterBusHandle = NULL;  // set by bsp 
 
 void app_main(void) {
 	esp_err_t err;
@@ -115,11 +114,16 @@ void app_main(void) {
 	int lastSecond = -1;
 	lv_display_t *display;
 
+
+
+    i2c_master_bus_init();// second port for SCD30 todo make class 
+
+
 	dummycp = server_root_cert_pem_start;
 
 	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
-
+	gpio_set_level(RS485DE_PIN, 1);
 
 
 // uses RS485 outputsconnected tp optocouplers for heating and cooling valve
@@ -153,20 +157,15 @@ void app_main(void) {
 
 	board_i2c_recover();
 
-	I2CSemaphore = xSemaphoreCreateBinary();
-	xSemaphoreGive(I2CSemaphore);
-
 	display = bsp_display_start();
 	bsp_display_rotate(display,LV_DISPLAY_ROTATION_180);
 
 	bsp_display_lock(0);
-	i2CmasterBusHandle = bsp_i2c_get_handle();
-
 
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 4 * 1024, NULL, 0, NULL);
-//TaskCreate(sensirionTask, "sensirionTask", 4 * 1024, i2CmasterBusHandle, 0, &SensirionTaskh);
+	xTaskCreate(sensirionTask, "sensirionTask", 4 * 1024, NULL, 0, &SensirionTaskh);
 	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 

@@ -61,10 +61,6 @@ void setPWM(int perc) {
 	static int state = 0;
 	bool heatingActive = true;
 
-#warning PWM off
-	return;
-
-
 	if (perc < 0) {
 		heatingActive = false;
 		perc = -1 * perc;
