@@ -5,26 +5,26 @@
  *      Author: dig
  */
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_NONE
+// #define LOG_LOCAL_LEVEL ESP_LOG_NONE
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
-#include "i2c.h"
+#include "CGIcommonScripts.h"
+#include "ClockDisplay.h"
 #include "PID.h"
 #include "SCD30.h"
 #include "averager.h"
 #include "cgiScripts.h"
 #include "guiTask.h"
+#include "i2c.h"
 #include "log.h"
 #include "sensirionTask.h"
 #include "settings.h"
 #include "udpClient.h"
 #include "wifiConnect.h"
-#include "ClockDisplay.h"
-#include "CGIcommonScripts.h"
 
 #include <math.h>
 #include <string.h>
@@ -35,7 +35,7 @@
 #define SCD30_TIMEOUT 2500 // * 10ms
 #define CO2AUTOCALTIME 15  // minutes
 
-#define NR_SENSORVALUES		3 
+#define NR_SENSORVALUES 3
 
 // #define SIMULATE
 
@@ -153,33 +153,36 @@ void sensirionTask(void *pvParameter) {
 	struct tm timeinfo;
 	int lastminute = -1;
 	int co2autoCalTimer = CO2AUTOCALTIME;
-	int sensirionTimeoutTimer = SCD30_TIMEOUT;
+	int sensirionTimeoutTimer = 20;
 
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
 	displayMssg.str2 = NULL;
-
-	i2c_master_bus_handle_t I2CbusHandle = getI2CbusHandle();	// second port 
-    gpio_set_pull_mode ( (gpio_num_t) SDA_PIN,GPIO_PULLUP_ONLY);
-    gpio_set_pull_mode ( (gpio_num_t) SCL_PIN,GPIO_PULLUP_ONLY);
-
-
 	ESP_LOGI(TAG, "Starting SCD30 task");
+
+	log_t* measLog = initLog();
+	if (measLog == NULL) {
+		ESP_LOGE(TAG, "No memory for log!");
+	}
+
+	i2c_master_bus_handle_t I2CbusHandle = getI2CbusHandle(); // second port
+	gpio_set_pull_mode((gpio_num_t)SDA_PIN, GPIO_PULLUP_ONLY);
+	gpio_set_pull_mode((gpio_num_t)SCL_PIN, GPIO_PULLUP_ONLY);
 
 	co2Averager.setAverages(AVERAGES);
 	tempAverager.setAverages(AVERAGES);
 	humAverager.setAverages(AVERAGES);
 
 	while ((airSensor.begin(I2CbusHandle, false, true) != ESP_OK) && (sensirionTimeoutTimer-- > 0)) {
-		airSensor.reset();
-		resets++;
-		sensirionError = true;
 		ESP_LOGE(TAG, "Air sensor not detected");
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(2000 / portTICK_PERIOD_MS);
 	}
-	while (airSensor.setMeasurementInterval(20)) {
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+	if (sensirionTimeoutTimer <= 0) {
+		sensirionError = true;
+		vTaskDelete(NULL);
+	}
+
+	if (airSensor.setMeasurementInterval(20) != ESP_OK)
 		ESP_LOGE(TAG, "Error setMeasurementInterval");
-	}
 
 	sensirionError = false;
 	sensirionTimeoutTimer = SCD30_TIMEOUT;
@@ -189,7 +192,7 @@ void sensirionTask(void *pvParameter) {
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 	// testLog();
 	while (1) {
-		//vTaskDelay(10 / portTICK_PERIOD_MS);
+		// vTaskDelay(10 / portTICK_PERIOD_MS);
 		vTaskDelay(2 / portTICK_PERIOD_MS);
 
 		time(&now);
@@ -217,7 +220,7 @@ void sensirionTask(void *pvParameter) {
 			lastVal.co2 = airSensor.getCO2();
 			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
 			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
-			if (lastVal.co2 > 350)  {						  // first measurement invalid, reject
+			if (lastVal.co2 > 350) {						  // first measurement invalid, reject
 				co2Averager.write(lastVal.co2 * 1000.0);
 				tempAverager.write(lastVal.temperature * 1000.0);
 				humAverager.write(lastVal.hum * 1000.0);
@@ -225,7 +228,7 @@ void sensirionTask(void *pvParameter) {
 
 			updatePID(lastVal.temperature);
 
-			//ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
+			// ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
 
 			for (int n = 0; n < NR_SENSORVALUES; n++) {
 				displayMssg.line = n;
@@ -233,7 +236,7 @@ void sensirionTask(void *pvParameter) {
 				switch (n) {
 				case 0:
 					sprintf(displayStr[n], "%2.1f", lastVal.temperature - userSettings.temperatureOffset);
-				ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature ,userSettings.temperatureOffset);
+					ESP_LOGI(TAG, "t %f  o %f", lastVal.temperature, userSettings.temperatureOffset);
 					break;
 				case 1:
 					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);
@@ -245,10 +248,10 @@ void sensirionTask(void *pvParameter) {
 						sprintf(displayStr[n], "%2.0f", lastVal.co2);
 					break;
 				}
-				if( xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS )
+				if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
 					ESP_LOGE(TAG, "to");
 
-			//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);	
+				//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);
 			}
 
 #ifdef TURBO_MODE
@@ -291,8 +294,6 @@ void sensirionTask(void *pvParameter) {
 	} // end while(1)
 } // end sensirionTask
 
-
-
 void getAvgMeasValues(sensorMssg_t *dest) {
 	dest->co2 = avgVal.co2;
 	dest->hum = avgVal.hum;
@@ -300,8 +301,6 @@ void getAvgMeasValues(sensorMssg_t *dest) {
 }
 
 // CGI stuff
-
-
 
 int printLog(log_t *logToPrint, char *pBuffer) {
 	int len;
@@ -345,8 +344,10 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "RH offset", userSettings.RHoffset);
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PWM", PIDsetting);
 		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
+	#ifdef USE_OTA
 		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", getFirmWareVersion());
 		len += sprintf(pBuffer + len, "%s,%s\n", "SPIFFS versie", wifiSettings.SPIFFSversion);
+	#endif
 		return len;
 		break;
 	case 2:
@@ -455,4 +456,3 @@ void parseCGIWriteData(char *buf, int received) {
 	if (save)
 		saveSettings();
 }
-

@@ -15,7 +15,7 @@
 #include "freertos/task.h"
 #include "sdkconfig.h"
 
-#define USE_OTA
+//#define USE_OTA
 
 #ifdef __cplusplus
 extern "C" {

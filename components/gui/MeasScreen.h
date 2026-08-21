@@ -48,6 +48,7 @@ public:
 	void setStatusIndicator(thermostatStatus_t);
 	void setStatusLine(const char *text);
 	void setClockDisplayText(const char *text);
+	void setClockDisplayOutsideTemp(const char *text);
 
 	lv_obj_t *screen;
 

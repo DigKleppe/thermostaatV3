@@ -13,6 +13,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "lwip/ip_addr.h"
+
+#include "KNMItask.h"
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
@@ -21,6 +23,7 @@ volatile bool clockSynced;
 struct tm timeinfo;
 static const char *TAG = "Clock";
 #define CONFIG_SNTP_TIME_SERVER "pool.ntp.org"
+volatile bool timeIsSet;
 
 // #define MAXDISPLAYS 5
 // ClockDisplay *clockToUpdate[MAXDISPLAYS];
@@ -42,13 +45,14 @@ static void initialize_sntp(void) {
 void clockTask(void *pvParameter) {
 	int lastsec = -1;
 	char strftime_buf[64];
+	char outSiteTempBuf[20];
 	ClockDisplay *pd;
 	bool once = false;
 	displayMssg_t displayMssg;
 	int dummy;
 	displayMssg.displayItem = DISPLAY_ITEM_CLOCK;
 	displayMssg.str1 = strftime_buf;
-	displayMssg.str2 = NULL;
+	displayMssg.str2 = outSiteTempBuf;
 
 	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
 	tzset();
@@ -63,7 +67,8 @@ void clockTask(void *pvParameter) {
 		ESP_LOGI(TAG, "Waiting for system time to be set... );// (%d/%d)", retry, retry_count);
 		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}
-
+	
+	timeIsSet = true;
 	do {
 		time(&now);
 		localtime_r(&now, &timeinfo);
@@ -75,6 +80,13 @@ void clockTask(void *pvParameter) {
 				once = true;
 			}
 			sprintf(strftime_buf, "%2d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+			if ( buitenTemperatuur != ERROR_TEMPERATURE)
+				sprintf(outSiteTempBuf, "%2.1f \xC2\xB0""C", buitenTemperatuur);
+			else
+				outSiteTempBuf[0]=0;
+
+
+		if( displayMssgBox)
 			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 		}
 		vTaskDelay(200 / portTICK_PERIOD_MS);

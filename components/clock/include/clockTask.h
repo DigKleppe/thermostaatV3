@@ -12,7 +12,7 @@
 #include <sys/time.h>
 
 extern struct tm timeinfo;
-
+extern volatile bool timeIsSet;
 void clockTask(void *pvParameter);
 
 

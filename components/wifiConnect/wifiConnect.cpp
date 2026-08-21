@@ -5,7 +5,7 @@ handles wifi connect process
 
 */
 
-#define USE_OTA
+//#define USE_OTA
 
 #include "esp_event.h"
 #include "esp_log.h"

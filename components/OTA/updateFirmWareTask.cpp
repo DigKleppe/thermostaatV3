@@ -20,10 +20,18 @@
 #include "httpsReadFile.h"
 #include "settings.h"
 #include "wifiConnect.h"
-
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#include "esp_crt_bundle.h"
+#endif
+#ifdef USE_OTA
 //#define DOWNLOAD_ONLY
 
 static uint8_t ota_write_data[BUFFSIZE];
+
+
+extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+
 
 static const char *TAG = "updateFirmwareTask";
 
@@ -43,11 +51,39 @@ void updateFirmwareTask(void *pvParameter) {
 
 	updateStatus = UPDATE_BUSY;
 
-	httpsRegParams.httpsServer = wifiSettings.upgradeServer;
+	esp_http_client_config_t config;
+	memset((uint8_t *)&config, 0, sizeof(config));
+
 	strcpy(updateURL, wifiSettings.upgradeURL);
 	strcat(updateURL, "/");
 	strcat(updateURL, wifiSettings.upgradeFileName);
-	httpsRegParams.httpsURL = updateURL;
+
+	config.url = updateURL;
+	config.method = HTTP_METHOD_GET;
+	config.timeout_ms = 10000;
+	config.crt_bundle_attach = esp_crt_bundle_attach;
+	config.cert_pem = server_root_cert_pem_start;						// NULL betekent: gebruik de ingebouwde certificatenbundel
+//	config.skip_cert_common_name_check = false; // CN validatie inschakelen
+	config.keep_alive_enable = false;
+
+	ESP_LOGI(TAG, "Request URL: %s", updateURL);
+
+	esp_http_client_handle_t client = esp_http_client_init(&config);
+	if (client == NULL) {
+		ESP_LOGE(TAG, " HTTP client not initialized!");
+		updateStatus = UPDATE_ERROR;
+		vTaskDelete(NULL);
+	}
+
+
+
+	//httpsRegParams.httpsServer = wifiSettings.upgradeServer;
+	// strcpy(updateURL, wifiSettings.upgradeURL);
+	// strcat(updateURL, "/");
+	// strcat(updateURL, wifiSettings.upgradeFileName);
+//	httpsRegParams.httpsURL = updateURL;
+	
+	httpsRegParams.httpClientHandle = client;
 	httpsRegParams.destbuffer = ota_write_data;
 	httpsRegParams.maxChars = sizeof(ota_write_data);
 
@@ -190,3 +226,4 @@ void updateFirmwareTask(void *pvParameter) {
 
 	vTaskDelete(NULL);
 }
+#endif

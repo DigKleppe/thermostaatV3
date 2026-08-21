@@ -20,12 +20,15 @@ class ClockDisplay {
 public:
 	ClockDisplay(lv_obj_t * parent, lv_coord_t y= -1);
 	virtual ~ClockDisplay();
-	void setText ( const char *);
-
+	void setText (const char *);
+	void setOutsideTemp (const char *);
 
 private:
 	lv_obj_t* _parent;
 	lv_obj_t* label;
+	
+	lv_obj_t* nameLabel; 
+	lv_obj_t* outTempLabel; 
 };
 
 #endif /* GUI_CLOCKDISPLAY_H_ */

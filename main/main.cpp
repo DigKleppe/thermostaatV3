@@ -19,6 +19,7 @@
 #include "wifiConnect.h"
 #include "PID.h"
 #include "i2c.h"
+#include "KNMItask.h"
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
@@ -90,6 +91,9 @@ TaskHandle_t guiTaskh;
 TaskHandle_t SensirionTaskh;
 TaskHandle_t connectTaskh;
 TaskHandle_t autocalTaskh;
+TaskHandle_t KNMItaskh;
+TaskHandle_t udpTaskh;
+TaskHandle_t clockTaskh;
 
 void sensirionTask(void *pvParameter);
 
@@ -113,12 +117,7 @@ void app_main(void) {
 	struct tm timeinfo;
 	int lastSecond = -1;
 	lv_display_t *display;
-
-
-
     i2c_master_bus_init();// second port for SCD30 todo make class 
-
-
 	dummycp = server_root_cert_pem_start;
 
 	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
@@ -159,16 +158,15 @@ void app_main(void) {
 
 	display = bsp_display_start();
 	bsp_display_rotate(display,LV_DISPLAY_ROTATION_180);
-
 	bsp_display_lock(0);
 
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 4096, NULL, 2, &guiTaskh, 1);
+	xTaskCreatePinnedToCore(guiTask, "guiTask", 3 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
-	xTaskCreate(clockTask, "clock", 4 * 1024, NULL, 0, NULL);
-	xTaskCreate(sensirionTask, "sensirionTask", 4 * 1024, NULL, 0, &SensirionTaskh);
-	xTaskCreate(&autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
-	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
-
+	xTaskCreate(clockTask, "clock", 3 * 1024, NULL, 0, &clockTaskh);
+	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
+	xTaskCreate(autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
+	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, &udpTaskh);
+	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
 	bsp_display_brightness_set(userSettings.backLight);
 	bsp_display_unlock();
 
@@ -217,8 +215,8 @@ void app_main(void) {
 			snprintf(str, (volatile size_t){sizeof(str)}, "Verbinden met %s", wifiSettings.SSID);
 			break;
 		}
-		xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);	
-
+		if(displayMssgBox)
+			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);	
 	}
 
 	// while(1) {

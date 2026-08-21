@@ -112,6 +112,7 @@ void guiTask(void *pvParameter) {
 
 			case DISPLAY_ITEM_CLOCK:
 				measScreen->setClockDisplayText((char *)recDdisplayMssg.str1);
+				measScreen->setClockDisplayOutsideTemp((char *)recDdisplayMssg.str2);
 				break;
 
 			case DISPLAY_ITEM_STOP:

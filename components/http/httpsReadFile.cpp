@@ -24,8 +24,8 @@
 
 static const char *TAG = "httpsReadFile";
 
-extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+ extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+ extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 QueueHandle_t httpsReqMssgBox;
 QueueHandle_t httpsReqRdyMssgBox;
@@ -165,23 +165,32 @@ int httpsReadFile(char *url, char *dest, int maxChars) {
 
 int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	httpsMssg_t mssg;
+    esp_http_client_handle_t client;
 	int read_len = 0, total_read_len = 0, content_length, status;
 
 	if (httpsRegParams->destbuffer == NULL) {
 		ESP_LOGE(TAG, "buffer not available");
 		return -1;
 	}
+	client = httpsRegParams->httpClientHandle;
+	if (client == NULL) {
+		ESP_LOGE(TAG, "httpClientHandle not available");
+		return -1;
+	}
+	// esp_http_client_config_t config = {
+	// 	.url = httpsRegParams->httpsURL,
+	// 	// .crt_bundle_attach = esp_crt_bundle_attach,
+	// 	.cert_pem = server_root_cert_pem_start,
+	// };
 
-	esp_http_client_config_t config = {
-		.url = httpsRegParams->httpsURL,
-		// .crt_bundle_attach = esp_crt_bundle_attach,
-		.cert_pem = server_root_cert_pem_start,
-	};
-
-	esp_http_client_handle_t client = esp_http_client_init(&config);
+	// esp_http_client_handle_t client = esp_http_client_init(&config);
 	esp_err_t err;
 	if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
 		ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+
+        ESP_LOGE(TAG,"free : %d", esp_get_free_internal_heap_size()); 
+        ESP_LOGE(TAG,"min: %d", esp_get_minimum_free_heap_size());
+
 		return -1;
 	}
 	content_length = esp_http_client_fetch_headers(client);
@@ -194,7 +203,8 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	}
 	else {
 		do {
-			if (xQueueReceive(httpsReqRdyMssgBox, &mssg, MSSGBOX_TIMEOUT)) {
+            if(1) {
+	//		if (xQueueReceive(httpsReqRdyMssgBox, &mssg, MSSGBOX_TIMEOUT)) {
 				read_len = esp_http_client_read(client, (char *)httpsRegParams->destbuffer, httpsRegParams->maxChars);
 				mssg.len = read_len;
 				xQueueSend(httpsReqMssgBox, &mssg, MSSGBOX_TIMEOUT);

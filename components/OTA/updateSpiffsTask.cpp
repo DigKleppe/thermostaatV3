@@ -17,8 +17,14 @@
 #include "wifiConnect.h"
 #include "settings.h"
 #include "httpsReadFile.h"
-
+#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#include "esp_crt_bundle.h"
+#endif
+#ifdef USE_OTA
 static const char *TAG = "updateSPIFFSTask";
+
+extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 void updateSpiffsTask(void *pvParameter) {
 	esp_err_t err;
@@ -39,14 +45,38 @@ void updateSpiffsTask(void *pvParameter) {
 	ESP_LOGI(TAG, "SPIFFS partition type %d subtype %d (offset 0x%08"PRIx32")", spiffsPartition->type, spiffsPartition->subtype, spiffsPartition->address);
 
 	err = ESP_OK;
+	esp_http_client_config_t config;
+	memset((uint8_t *)&config, 0, sizeof(config));
 
-	httpsRegParams.httpsServer = wifiSettings.upgradeServer;
 	strcpy(updateURL, wifiSettings.upgradeURL);
-	strcat(updateURL, "//");
+	strcat(updateURL, "/");
 	strcat(updateURL, CONFIG_SPIFFS_UPGRADE_FILENAME);
 
-	httpsRegParams.httpsURL = updateURL;
+	config.url = updateURL;
+	config.method = HTTP_METHOD_GET;
+	config.timeout_ms = 10000;
+	config.crt_bundle_attach = esp_crt_bundle_attach;
+	config.cert_pem = server_root_cert_pem_start;						// NULL betekent: gebruik de ingebouwde certificatenbundel
+//	config.skip_cert_common_name_check = false; // CN validatie inschakelen
+	config.keep_alive_enable = false;
 
+	ESP_LOGI(TAG, "Request URL: %s", updateURL);
+
+	esp_http_client_handle_t client = esp_http_client_init(&config);
+	if (client == NULL) {
+		ESP_LOGE(TAG, " HTTP client not initialized!");
+		updateStatus = UPDATE_ERROR;
+		vTaskDelete(NULL);
+	}
+
+	// httpsRegParams.httpsServer = wifiSettings.upgradeServer;
+	// strcpy(updateURL, wifiSettings.upgradeURL);
+	// strcat(updateURL, "//");
+	// strcat(updateURL, CONFIG_SPIFFS_UPGRADE_FILENAME);
+
+	// httpsRegParams.httpsURL = updateURL;
+	
+	httpsRegParams.httpClientHandle = client;
 	httpsRegParams.destbuffer = ota_write_data;
 	httpsRegParams.maxChars = sizeof(ota_write_data) ;
 
@@ -108,3 +138,4 @@ void updateSpiffsTask(void *pvParameter) {
 
 }
 
+#endif

@@ -21,6 +21,8 @@
 #include "updateTask.h"
 #include "wifiConnect.h"
 
+#ifdef USE_OTA
+
 static const char *TAG = "updateTask";
 
 volatile updateStatus_t updateStatus;
@@ -151,3 +153,4 @@ void updateTask(void *pvParameter) {
 
 	vTaskDelete(NULL);
 }
+#endif

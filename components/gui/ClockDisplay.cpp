@@ -15,14 +15,32 @@ ClockDisplay::ClockDisplay(lv_obj_t *parent, lv_coord_t y) {
 
 	label = lv_label_create(_parent);
 	int h = CLOCKFONT.line_height;
+
 	lv_obj_add_style(label, &styleClock, 0);
 	lv_obj_set_size(label, 240, h + 4);
-	lv_label_set_text(label, "12:34:56");
-	lv_obj_set_pos(label, 0, 1);
+	lv_label_set_text(label, "28:88:88");
+	lv_obj_set_pos(label, 0, 0);
+
+	nameLabel = lv_label_create(_parent);
+	lv_obj_set_pos(nameLabel, 220,0);
+	lv_obj_add_style(nameLabel, &styleMeasName, 0);
+	lv_obj_set_size(nameLabel, 50, h + 4);
+//	lv_label_set_text(nameLabel, name);
+	lv_obj_set_style_text_align(nameLabel, LV_TEXT_ALIGN_RIGHT, 0);
+	
+	outTempLabel = lv_label_create(_parent);
+	lv_obj_add_style(outTempLabel, &styleClock, 0);
+	lv_obj_set_size(outTempLabel, 160, h + 4);
+	lv_label_set_text(outTempLabel, "");
+	lv_obj_set_pos(outTempLabel, 280, 0);
 }
 
 void ClockDisplay::setText(const char *str) {
 	 lv_label_set_text(label, str); 
+}
+void ClockDisplay::setOutsideTemp (const char *str) {
+	 lv_label_set_text(nameLabel, "Tb:"); 
+	 lv_label_set_text(outTempLabel, str); 
 }
 
 ClockDisplay::~ClockDisplay() {

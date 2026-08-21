@@ -129,6 +129,11 @@ void MeasScreen::setClockDisplayText(const char *text){
 	clockDisplay->setText(text);
 }
 
+void MeasScreen::setClockDisplayOutsideTemp(const char *text){
+	clockDisplay->setOutsideTemp(text);
+}
+
+
 
 void MeasScreen::show() {
 	lv_scr_load(screen);

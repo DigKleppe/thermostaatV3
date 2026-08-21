@@ -10,17 +10,29 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include <esp_http_client.h>
 
 #define SERVER_URL_MAX_SZ 256
 #define HTTPSBUFSIZE 1024
 #define MSSGBOX_TIMEOUT (5000/portTICK_PERIOD_MS)
 
+
 typedef struct {
-	char *httpsServer;
-	char *httpsURL;
+	esp_http_client_handle_t httpClientHandle;
+//	char *httpsServer;
+//	char *httpsURL;
 	uint8_t *destbuffer; // where to put data read
 	int maxChars;
 } httpsRegParams_t;
+
+// typedef struct {
+// 	char *httpsServer;
+// 	char *httpsURL;
+// 	uint8_t *destbuffer; // where to put data read
+// 	int maxChars;
+// } httpsRegParams_t;
+
+
 
 
 typedef struct {

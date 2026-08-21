@@ -27,6 +27,8 @@ extern int logRxIdx;
 extern int logTxIdx;
 extern unsigned long timeStamp;
 
+
+log_t *initLog(void); 
 int getAllLogsScript(char *pBuffer, int count);
 int getNewLogsScript(char *pBuffer, int count);
 int clearLogScript(char *pBuffer, int count);
