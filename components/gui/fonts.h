@@ -44,7 +44,10 @@ extern const  lv_font_t dejaVuSansMono904bppSub;
 extern const lv_font_t insloata100_4bppSub;
 extern const lv_font_t insloata50_4bppSub;
 extern const lv_font_t insloata60_4bppSub;
-
+extern const lv_font_t ManjariThin40;
+extern const lv_font_t ManjariThin50;
+extern const lv_font_t thin50;
+extern const lv_font_t thin75;
 
 
 

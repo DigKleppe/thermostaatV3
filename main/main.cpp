@@ -105,6 +105,14 @@ extern "C" {
 #endif
 const char *dummycp;
 
+#define MAXBL 50
+#define MINBL 12
+void setBacklight( int value) { // 5-100
+	float perc = MINBL + (value-5) * (MAXBL/100.0);
+	ESP_LOGI(TAG, "BL %f", perc);
+	bsp_display_brightness_set((int) perc);
+}
+
 
 void app_main(void) {
 	esp_err_t err;
@@ -167,7 +175,7 @@ void app_main(void) {
 	xTaskCreate(autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, &udpTaskh);
 	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
-	bsp_display_brightness_set(userSettings.backLight);
+	setBacklight(userSettings.backLight);
 	bsp_display_unlock();
 
 	while (1) {
@@ -185,7 +193,7 @@ void app_main(void) {
 		
 		if (settingsChanged) {
 			minuteCntr = 60;
-			bsp_display_brightness_set(userSettings.backLight);
+			setBacklight(userSettings.backLight);
 			settingsChanged = false;
 		}
 		if (minuteCntr) {

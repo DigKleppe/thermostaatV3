@@ -32,8 +32,8 @@ extern lv_style_t styleSymbol;
 #define DEFAULTBORDERCOLOR			lv_color_make(0, 255, 0)
 #define DEFAULTBACKGROUNDCOLOR 		lv_color_black()
 
-#define MEASFONT					cantarelLight75  //dejavusansEL75
-#define MEASUNITFONT				cantarelLight50 // insloata60_4bppSub
+#define MEASFONT					thin75 //cantarelLight75  //dejavusansEL75
+#define MEASUNITFONT				thin50 //cantarelLight50 // insloata60_4bppSub
 #define MEASNAMEFONT 				cantarel25  //cantarelRegular20 // lv_font_montserrat_20
 #define MEASVALUECOLOR				DEFAULTVALUECOLOR
 #define MEASVALUEBGCOLOR			DEFAULTBACKGROUNDCOLOR
@@ -54,7 +54,7 @@ extern lv_style_t styleSymbol;
 #define NAVIGARROWSCOLOR			DEFAULTVALUECOLOR
 
 
-#define CLOCKFONT					cantarelLight50// cantarel25 //lv_font_montserrat_20 //dejavusansEL44
+#define CLOCKFONT					thin50 // cantarelLight50// cantarel25 //lv_font_montserrat_20 //dejavusansEL44
 #define	CLOCKCOLOR					DEFAULTVALUECOLOR
 #define CLOCKBGCOLOR				DEFAULTBACKGROUNDCOLOR
 
