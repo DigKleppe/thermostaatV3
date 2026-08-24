@@ -17,6 +17,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "freertos/timers.h"
+
 #include "styles.h"
 
 #include "settings.h"
@@ -43,19 +45,27 @@ extern int rssi;
 
 #define NRSCREENS 3
 
+#define SCREENTIME (15 * 1000 / portTICK_PERIOD_MS)
+
+TimerHandle_t screenTimer;
+
+
+
 const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
-								{"Temp. offset:","%1.1f",& userSettings.temperatureOffset},
-								{"RH offset:","%1.1f",& userSettings.RHoffset},
+								{"Temp. offset:", "%1.1f", &userSettings.temperatureOffset},
+								{"RH offset:", "%1.1f", &userSettings.RHoffset},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTime},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
+	xTimerStart(screenTimer,0);
 	switch (idx) {
 	case 0:
 		measScreen->show();
+		measScreen->setSetpointValue(); 
 		break;
 	case 1:
 		mainScreen->show();
@@ -69,7 +79,13 @@ void showScreen(int idx) {
 	}
 }
 
+void screenTimerCallback(TimerHandle_t xTimer) {
+	screenIdx = 0;
+	showScreen(0);
+}
+
 void nextScreenClick(lv_event_t *e) { // from navigArrows
+	
 	if (screenIdx < (NRSCREENS - 1))
 		screenIdx++;
 	else
@@ -78,6 +94,7 @@ void nextScreenClick(lv_event_t *e) { // from navigArrows
 }
 
 void prevScreenClick(lv_event_t *e) { // from navigArrows
+	
 	if (screenIdx > 0)
 		screenIdx--;
 	else
@@ -90,6 +107,8 @@ void guiTask(void *pvParameter) {
 	int dummy;
 	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
 	TickType_t xLastWakeTime;
+
+	screenTimer = xTimerCreate("screenTimer", SCREENTIME, false, (void *)0, screenTimerCallback);
 
 	initStyles();
 	mainScreen = new MainScreen();
@@ -130,4 +149,3 @@ void guiTask(void *pvParameter) {
 		xTaskDelayUntil(&xLastWakeTime, DISPLAYPROCESTTIME - (110 / portTICK_PERIOD_MS));
 	}
 }
-

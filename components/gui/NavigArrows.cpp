@@ -10,6 +10,7 @@
 
 #include <NavigArrows.h>
 #include "fonts.h"
+#include "stdio.h"
 
 void nextScreenClick (lv_event_t * e);
 void prevScreenClick (lv_event_t * e);
@@ -27,19 +28,24 @@ static bool styleIsSet;
 
 static void rightClick(lv_event_t * e)
 {
-    lv_event_code_t code = lv_event_get_code(e);
+   
+//	printf( "next:\n");
+	lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_SHORT_CLICKED)
     {
     	nextScreenClick(e);
+		printf( "next: sc\n");
     }
 }
 
 
 static void leftClick(lv_event_t * e)
 {
-    lv_event_code_t code = lv_event_get_code(e);
+  //  printf( "prev:\n");
+	lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_SHORT_CLICKED ) {
     	prevScreenClick(e);
+		printf( "prev: sc\n");
     }
 }
 

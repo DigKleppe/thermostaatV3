@@ -1,3 +1,5 @@
+#include "KNMItask.h"
+#include "PID.h"
 #include "autoCalTask.h"
 #include "clockTask.h"
 #include "driver/gpio.h"
@@ -10,6 +12,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "guiTask.h"
+#include "i2c.h"
 #include "lvgl.h"
 #include "nvs.h"
 #include "nvs_flash.h"
@@ -17,9 +20,6 @@
 #include "settings.h"
 #include "updateTask.h"
 #include "wifiConnect.h"
-#include "PID.h"
-#include "i2c.h"
-#include "KNMItask.h"
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
@@ -98,7 +98,7 @@ TaskHandle_t clockTaskh;
 void sensirionTask(void *pvParameter);
 
 uint32_t upTime;
-uint32_t timeStamp =1;
+uint32_t timeStamp = 1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,12 +107,11 @@ const char *dummycp;
 
 #define MAXBL 50
 #define MINBL 12
-void setBacklight( int value) { // 5-100
-	float perc = MINBL + (value-5) * (MAXBL/100.0);
+void setBacklight(int value) { // 5-100
+	float perc = MINBL + (value - 5) * (MAXBL / 100.0);
 	ESP_LOGI(TAG, "BL %f", perc);
-	bsp_display_brightness_set((int) perc);
+	bsp_display_brightness_set((int)perc);
 }
-
 
 void app_main(void) {
 	esp_err_t err;
@@ -125,16 +124,15 @@ void app_main(void) {
 	struct tm timeinfo;
 	int lastSecond = -1;
 	lv_display_t *display;
-    i2c_master_bus_init();// second port for SCD30 todo make class 
+	i2c_master_bus_init(); // second port for SCD30 todo make class
 	dummycp = server_root_cert_pem_start;
 
-	gpio_set_direction( RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
-	gpio_set_direction( RS485TX_PIN, GPIO_MODE_OUTPUT);
+	gpio_set_direction(RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
+	gpio_set_direction(RS485TX_PIN, GPIO_MODE_OUTPUT);
 	gpio_set_level(RS485DE_PIN, 1);
 
-
-// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
-// T6 removed , pin 1 U6 connected to pin2/3 U7 
+	// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
+	// T6 removed , pin 1 U6 connected to pin2/3 U7
 
 	displayMssg_t displayMssg;
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
@@ -165,7 +163,7 @@ void app_main(void) {
 	board_i2c_recover();
 
 	display = bsp_display_start();
-	bsp_display_rotate(display,LV_DISPLAY_ROTATION_180);
+	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
 
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 3 * 1024, NULL, 2, &guiTaskh, 1);
@@ -186,11 +184,11 @@ void app_main(void) {
 		if (lastSecond != timeinfo.tm_sec) {
 			lastSecond = timeinfo.tm_sec; // every second
 			timeStamp++;
-			upTime ++;
+			upTime++;
 			if (timeStamp == 0)
 				timeStamp++;
 		}
-		
+
 		if (settingsChanged) {
 			minuteCntr = 60;
 			setBacklight(userSettings.backLight);
@@ -211,11 +209,11 @@ void app_main(void) {
 			break;
 
 		case WPS_ACTIVE:
-		//	toggle = !toggle;
-		//	if (toggle)
-				sprintf(str, "Geen wifi, Druk WPS op modem");
-		//	else
-		//		sprintf(str, "Druk WPS op modem");
+			//	toggle = !toggle;
+			//	if (toggle)
+			sprintf(str, "Geen wifi, Druk WPS op modem");
+			//	else
+			//		sprintf(str, "Druk WPS op modem");
 			break;
 
 		default:
@@ -223,20 +221,19 @@ void app_main(void) {
 			snprintf(str, (volatile size_t){sizeof(str)}, "Verbinden met %s", wifiSettings.SSID);
 			break;
 		}
-		if(displayMssgBox)
-			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);	
-	}
+		if (displayMssgBox)
+			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 
-	// while(1) {
-	//    			// stackWm[0] = uxTaskGetStackHighWaterMark( connectTaskh );
-	// 			// stackWm[1] = uxTaskGetStackHighWaterMark( guiCommonTaskh );
-	// 			// stackWm[2] = uxTaskGetStackHighWaterMark( guiTaskh );
-	// 			// stackWm[3] = uxTaskGetStackHighWaterMark( SensirionTaskh );
-	// 			printf ( "freeHeapSize %d\n",  xPortGetFreeHeapSize());
-	// 			printf ( "freeHeapSize MALLOC_CAP_DMA:\n");
-	// 			heap_caps_print_heap_info(MALLOC_CAP_DMA);
-	//             vTaskDelay(1000);
-	// }
+		// while(1) {
+		//    			// stackWm[0] = uxTaskGetStackHighWaterMark( connectTaskh );
+		// 			// stackWm[1] = uxTaskGetStackHighWaterMark( guiCommonTaskh );
+		// 			// stackWm[2] = uxTaskGetStackHighWaterMark( guiTaskh );
+		// 			// stackWm[3] = uxTaskGetStackHighWaterMark( SensirionTaskh );
+		// printf("freeHeapSize %d\n", xPortGetFreeHeapSize());
+		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
+		// heap_caps_print_heap_info(MALLOC_CAP_DMA);
+		// vTaskDelay(1000);
+	}
 }
 #ifdef __cplusplus
 }

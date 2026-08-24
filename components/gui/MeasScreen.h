@@ -32,8 +32,7 @@
 
 #define NR_ITEMS 3
 
-
-//#define SHOWSETPOINT 
+// #define SHOWSETPOINT
 
 class MeasScreen { // public Stream{
 public:
@@ -101,6 +100,11 @@ private:
 	MeasDisplay *measDisplay[NR_ITEMS];
 	StatusIndicator *statusIndicator;
 	VerticalSpinbox *spinbox;
+	lv_obj_t *setpointLabel;
+	lv_obj_t *setpointValueLabel;
+
+public:
+	void setSetpointValue(void);
 };
 
 #endif /* COMPONENTS_GUI_MEASSCREEN_H_ */

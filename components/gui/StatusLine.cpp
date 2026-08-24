@@ -69,7 +69,7 @@ StatusLine::StatusLine(lv_obj_t * parent) {
 	lv_label_set_text(statusLine,text);
 
     lv_obj_set_size(statusLine, LV_HOR_RES_MAX, 40);
-    lv_obj_set_pos(statusLine, 0, LV_VER_RES_MAX - 130);
+    lv_obj_set_pos(statusLine, 0, LV_VER_RES_MAX - 60);  // -130
 
 //	lv_obj_set_x(statusLine, 0);
 //	lv_coord_t coord =lv_obj_get_height(statusLine);

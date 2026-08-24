@@ -26,6 +26,9 @@ extern lv_style_t styleSpinButton;
 extern lv_style_t styleClock;
 extern lv_style_t styleInfo;
 extern lv_style_t styleSymbol;
+extern lv_style_t styleSetpoint;
+extern lv_style_t styleSetpointValue;
+
 
 //  lv_palette_main(LV_PALETTE_GREY)
 #define DEFAULTVALUECOLOR			lv_color_make(255, 255, 255)
@@ -70,6 +73,14 @@ extern lv_style_t styleSymbol;
 
 #define STATUSLINE_FONT             insolata25
 
+
+#define	SETPOINTFONT                MEASNAMEFONT
+#define	SETPOINTCOLOR               DEFAULTVALUECOLOR
+#define	SETPOINTBGCOLOR             DEFAULTBACKGROUNDCOLOR
+
+#define	SETPOINTVALUEFONT          MEASNAMEFONT
+#define	SETPOINTVALUECOLOR         DEFAULTVALUECOLOR
+#define	SETPOINTVALUEBGCOLOR       DEFAULTBACKGROUNDCOLOR
 
 void initStyles (void);
 
