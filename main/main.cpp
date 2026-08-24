@@ -97,7 +97,8 @@ TaskHandle_t clockTaskh;
 
 void sensirionTask(void *pvParameter);
 
-uint32_t upTime;
+uint32_t upTime, upTimeHrs;
+
 uint32_t timeStamp = 1;
 
 #ifdef __cplusplus
@@ -185,6 +186,7 @@ void app_main(void) {
 			lastSecond = timeinfo.tm_sec; // every second
 			timeStamp++;
 			upTime++;
+			upTimeHrs = upTime/3600;
 			if (timeStamp == 0)
 				timeStamp++;
 		}

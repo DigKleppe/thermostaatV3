@@ -24,6 +24,7 @@
 
 #include "settings.h"
 #include "wifiConnect.h"
+#include "softwareVersions.h"
 
 // extern MenuSetttingsDesrc_t DMMSettingsDescrTable[];
 
@@ -42,7 +43,7 @@ StartScreen * startScreen;
 int screenIdx;
 extern float PIDsetting;
 extern char myIpAddress[];
-extern uint32_t upTime;
+extern uint32_t upTimeHrs;
 extern int rssi;
 
 #define NRSCREENS 4
@@ -55,11 +56,13 @@ TimerHandle_t screenTimer;
 
 const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
+								{"Softwareversie:","%s" , FIRMWARE_VERSION},
+								{"SPIFFSversie:","%s",SPIFFS_VERSION},
 								{"Temp. offset:", "%1.1f", &userSettings.temperatureOffset},
 								{"RH offset:", "%1.1f", &userSettings.RHoffset},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
-								{"Optijd:", "%d", &upTime},
+								{"Optijd:", "%d", &upTimeHrs},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
@@ -97,13 +100,13 @@ void nextScreenClick(lv_event_t *e) { // from navigArrows
 	if (screenIdx < (NRSCREENS - 1))
 		screenIdx++;
 	else
-		screenIdx = 0;
+		screenIdx = 1;
 	showScreen(screenIdx);
 }
 
 void prevScreenClick(lv_event_t *e) { // from navigArrows
 	
-	if (screenIdx > 0)
+	if (screenIdx > 1)
 		screenIdx--;
 	else
 		screenIdx = NRSCREENS - 1;

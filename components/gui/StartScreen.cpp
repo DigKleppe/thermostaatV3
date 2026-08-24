@@ -60,7 +60,7 @@ StartScreen::StartScreen(void) {
 
 	lv_obj_set_size(swVersionDateLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionDateLabel, &styleStartScreen, 0);
-	sprintf( str, "%s %s", __DATE__, __TIME__);
+	sprintf( str, "%s-%s", __DATE__, __TIME__);
 	lv_label_set_text_fmt(swVersionDateLabel,str);
 	lv_obj_align_to(swVersionDateLabel, swVersionLabel, LV_ALIGN_TOP_RIGHT, 0, SPACING);
 }
