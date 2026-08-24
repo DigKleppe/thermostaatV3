@@ -37,7 +37,7 @@
 #define ITEMWIDTH 200
 #define FIRSTY 70 // CLOCKDISPLAYHEIGHT
 
-#define SETPOINTY (LV_VER_RES_MAX - 50)
+#define SETPOINTY (LV_VER_RES_MAX - 60)
 
 void nextScreenClick(lv_event_t *e);
 

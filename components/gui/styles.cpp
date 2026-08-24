@@ -24,6 +24,8 @@ lv_style_t styleSetpointValue;
 lv_style_t styleInfo;
 lv_style_t styleSymbol;
 
+lv_style_t styleStartScreen;
+
 void initStyles ( void){
 	//lv_color_t c;
 	lv_style_init(&style_background);
@@ -95,6 +97,15 @@ void initStyles ( void){
 	lv_style_set_text_color(&styleSetpointValue, SETPOINTVALUECOLOR);
 	lv_style_set_bg_color(&styleSetpointValue, SETPOINTVALUEBGCOLOR);
 
+	lv_style_init(&styleSetpointValue);
+	lv_style_set_text_font(&styleSetpointValue, &SETPOINTVALUEFONT);
+	lv_style_set_text_color(&styleSetpointValue, SETPOINTVALUECOLOR);
+	lv_style_set_bg_color(&styleSetpointValue, SETPOINTVALUEBGCOLOR);
+
+	lv_style_init(&styleStartScreen);
+	lv_style_set_text_font(&styleStartScreen, &STARTSCREENFONT);
+	lv_style_set_text_color(&styleStartScreen, STARTSCREENTEXTCOLOR);
+	lv_style_set_bg_color(&styleStartScreen, STARTSCREENCOLOR);
 
 //	lv_style_set_radius(&styleClock, 5);
 //	lv_style_set_bg_opa(&styleClock, LV_OPA_COVER);

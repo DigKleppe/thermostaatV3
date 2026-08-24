@@ -27,9 +27,6 @@
 
 #include "PID.h"
 
-#define LV_SYMBOL_OHM "\xef\xCE\xA9"   // 0x3A9
-#define LV_SYMBOL_MICRO "\xef\xCE\xBC" // 0x3BC
-
 #define NR_ITEMS 3
 
 // #define SHOWSETPOINT

@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "lcd.h"
+#include "styles.h"
 
 #ifdef LV_CONF_INCLUDE_SIMPLE
 #include "lvgl.h"

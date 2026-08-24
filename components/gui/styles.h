@@ -28,6 +28,7 @@ extern lv_style_t styleInfo;
 extern lv_style_t styleSymbol;
 extern lv_style_t styleSetpoint;
 extern lv_style_t styleSetpointValue;
+extern lv_style_t styleStartScreen;
 
 
 //  lv_palette_main(LV_PALETTE_GREY)
@@ -81,6 +82,10 @@ extern lv_style_t styleSetpointValue;
 #define	SETPOINTVALUEFONT          MEASNAMEFONT
 #define	SETPOINTVALUECOLOR         DEFAULTVALUECOLOR
 #define	SETPOINTVALUEBGCOLOR       DEFAULTBACKGROUNDCOLOR
+
+#define STARTSCREENCOLOR           DEFAULTBACKGROUNDCOLOR
+#define STARTSCREENTEXTCOLOR       lv_palette_main (LV_PALETTE_YELLOW)
+#define STARTSCREENFONT            thin50
 
 void initStyles (void);
 

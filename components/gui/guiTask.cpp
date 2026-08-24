@@ -8,6 +8,7 @@
  */
 
 #include "guiTask.h"
+#include "StartScreen.h"
 #include "InfoScreen.h"
 #include "MainScreen.h"
 #include "MeasScreen.h"
@@ -25,7 +26,6 @@
 #include "wifiConnect.h"
 
 // extern MenuSetttingsDesrc_t DMMSettingsDescrTable[];
-extern "C" void disp_wait_for_pending_transactions(void);
 
 userState_t userState = USER_STATE_RUN;
 
@@ -36,6 +36,8 @@ QueueHandle_t displayReadyMssgBox;
 MainScreen *mainScreen;
 MeasScreen *measScreen;
 InfoScreen *infoScreen;
+StartScreen * startScreen;
+
 
 int screenIdx;
 extern float PIDsetting;
@@ -43,7 +45,7 @@ extern char myIpAddress[];
 extern uint32_t upTime;
 extern int rssi;
 
-#define NRSCREENS 3
+#define NRSCREENS 4
 
 #define SCREENTIME (15 * 1000 / portTICK_PERIOD_MS)
 
@@ -64,13 +66,19 @@ void showScreen(int idx) {
 	xTimerStart(screenTimer,0);
 	switch (idx) {
 	case 0:
+		startScreen->show();
+	
+		break;
+
+	case 1:
+		xTimerChangePeriod(screenTimer,SCREENTIME, 100);
 		measScreen->show();
 		measScreen->setSetpointValue(); 
 		break;
-	case 1:
+	case 2:
 		mainScreen->show();
 		break;
-	case 2:
+	case 3:
 		infoScreen->show();
 		break;
 
@@ -80,8 +88,8 @@ void showScreen(int idx) {
 }
 
 void screenTimerCallback(TimerHandle_t xTimer) {
-	screenIdx = 0;
-	showScreen(0);
+	screenIdx = 1;
+	showScreen(screenIdx);
 }
 
 void nextScreenClick(lv_event_t *e) { // from navigArrows
@@ -108,12 +116,14 @@ void guiTask(void *pvParameter) {
 	displayMssgBox = xQueueCreate(5, sizeof(displayMssg_t));
 	TickType_t xLastWakeTime;
 
-	screenTimer = xTimerCreate("screenTimer", SCREENTIME, false, (void *)0, screenTimerCallback);
+	screenTimer = xTimerCreate("screenTimer", (5 * 1000 / portTICK_PERIOD_MS), false, (void *)0, screenTimerCallback);
 
 	initStyles();
 	mainScreen = new MainScreen();
 	measScreen = new MeasScreen();
 	infoScreen = new InfoScreen(infoDesc);
+	startScreen = new StartScreen();
+
 	vTaskDelay(50 / portTICK_PERIOD_MS);
 	showScreen(0);
 
