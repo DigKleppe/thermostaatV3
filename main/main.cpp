@@ -18,8 +18,11 @@
 #include "nvs_flash.h"
 #include "sensirionTask.h"
 #include "settings.h"
-#include "updateTask.h"
 #include "wifiConnect.h"
+
+#ifdef USE_OTA
+#include "updateTask.h"
+#endif
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
@@ -94,6 +97,7 @@ TaskHandle_t autocalTaskh;
 TaskHandle_t KNMItaskh;
 TaskHandle_t udpTaskh;
 TaskHandle_t clockTaskh;
+TaskHandle_t updateTaskh;
 
 void sensirionTask(void *pvParameter);
 
@@ -162,7 +166,6 @@ void app_main(void) {
 	wifiConnect();
 
 	board_i2c_recover();
-
 	display = bsp_display_start();
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
@@ -174,6 +177,15 @@ void app_main(void) {
 	xTaskCreate(autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, &udpTaskh);
 	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
+
+
+// while(1) {
+// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;
+//     // free_heap_size = esp_get_free_heap_size();
+//     // min_free_heap_size = esp_get_minimum_free_heap_size(); 
+//     // printf("\n free heap size = %d \t  min_free_heap_size = %d \n",free_heap_size,min_free_heap_size);   
+// 	vTaskDelay(1000);
+// }
 	setBacklight(userSettings.backLight);
 	bsp_display_unlock();
 

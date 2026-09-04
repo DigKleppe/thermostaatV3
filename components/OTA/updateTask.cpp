@@ -5,6 +5,10 @@
  *      Author: dig
  */
 
+ //https://digkleppe.nl/firmware/thermostaat/firmWareVersion.txt
+
+
+
 #include "errno.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
@@ -16,10 +20,12 @@
 
 #include "httpsReadFile.h"
 #include "settings.h"
+
 #include "updateFirmWareTask.h"
 #include "updateSpiffsTask.h"
 #include "updateTask.h"
 #include "wifiConnect.h"
+#include "clockTask.h"
 
 #ifdef USE_OTA
 
@@ -56,12 +62,15 @@ esp_err_t getNewVersion(char *infoFileName, char *newVersion) {
 // must run with DHCP! DNS does not work , depending on modem
 
 void updateTask(void *pvParameter) {
-	//	int prescaler = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60;
 	bool doUpdate;
 	bool error = false;
 	char newVersion[MAX_STORAGEVERSIONSIZE];
 	TaskHandle_t updateFWTaskh;
 	TaskHandle_t updateSPIFFSTaskh;
+
+	while (! timeIsSet) {
+		vTaskDelay( 1000/portTICK_PERIOD_MS);
+	}
 
 	ESP_LOGI(TAG, "Running");
 	updateTaskHasFinished = false;

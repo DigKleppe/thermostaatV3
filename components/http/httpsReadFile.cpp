@@ -177,6 +177,7 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 		ESP_LOGE(TAG, "httpClientHandle not available");
 		return -1;
 	}
+    
 	// esp_http_client_config_t config = {
 	// 	.url = httpsRegParams->httpsURL,
 	// 	// .crt_bundle_attach = esp_crt_bundle_attach,
@@ -193,8 +194,12 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 
 		return -1;
 	}
+    ESP_LOGI(TAG, "Client open");
+
 	content_length = esp_http_client_fetch_headers(client);
+    ESP_LOGI(TAG, "headers fetchted cl: %d ", content_length );
 	status = esp_http_client_get_status_code(client);
+
 	ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %" PRId64, status, esp_http_client_get_content_length(client));
 
 	if ((status > 300) || (status < 200)) {
@@ -203,11 +208,13 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	}
 	else {
 		do {
-            if(1) {
-	//		if (xQueueReceive(httpsReqRdyMssgBox, &mssg, MSSGBOX_TIMEOUT)) {
+         //   if(1) {
+			if (xQueueReceive(httpsReqRdyMssgBox, &mssg, MSSGBOX_TIMEOUT)) {
 				read_len = esp_http_client_read(client, (char *)httpsRegParams->destbuffer, httpsRegParams->maxChars);
 				mssg.len = read_len;
+            //   	ESP_LOGI(TAG, "readfile read %d" , read_len);
 				xQueueSend(httpsReqMssgBox, &mssg, MSSGBOX_TIMEOUT);
+
 			} else {
 				ESP_LOGE(TAG, "Timeout httpsReqRdyMssgBox");
 				read_len = -1;
@@ -221,7 +228,7 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 }
 
 void httpsGetRequestTask(void *pvparameters) {
-	ESP_LOGI(TAG, "Start https_task");
+	ESP_LOGI(TAG, "Start https_getRequestTask");
 	httpsRegParams_t *httpsRegParams = (httpsRegParams_t *)pvparameters;
 	// char request[256];
 	// snprintf(request, sizeof(request), "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", httpsRegParams->httpsURL,

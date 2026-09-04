@@ -27,11 +27,12 @@ handles wifi connect process
 #include "mdns.h"
 #include "settings.h"
 #include "softwareVersions.h"
+#include "wifiConnect.h"
+
 #ifdef USE_OTA
 #include "updateTask.h"
 #endif
 
-#include "wifiConnect.h"
 #ifndef CONFIG_FIXED_LAST_IP_DIGIT
 #define CONFIG_FIXED_LAST_IP_DIGIT 0 // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
 // #define CONFIG_FIXED_LAST_IP_DIGIT  userSettings.fixedIPdigit  // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
