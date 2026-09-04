@@ -11,6 +11,7 @@
 #include "esp_rom_sys.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "guiTask.h"
 #include "i2c.h"
 #include "lvgl.h"
@@ -19,6 +20,7 @@
 #include "sensirionTask.h"
 #include "settings.h"
 #include "wifiConnect.h"
+#include "httpsReadFile.h"
 
 #ifdef USE_OTA
 #include "updateTask.h"
@@ -49,7 +51,9 @@ int rssi;
 #define BOARD_I2C_SDA GPIO_NUM_15
 #define BOARD_I2C_SCL GPIO_NUM_7
 
-SemaphoreHandle_t I2CSemaphore; // used by lvgl touch and sensor, shares the same i2C bus
+volatile bool hpptActive; // rtos semaphore not working
+
+
 
 static void board_i2c_recover(void) {
 	gpio_config_t io_conf = {0};
@@ -136,9 +140,6 @@ void app_main(void) {
 	gpio_set_direction(RS485TX_PIN, GPIO_MODE_OUTPUT);
 	gpio_set_level(RS485DE_PIN, 1);
 
-	// uses RS485 outputsconnected tp optocouplers for heating and cooling valve
-	// T6 removed , pin 1 U6 connected to pin2/3 U7
-
 	displayMssg_t displayMssg;
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
 	displayMssg.str1 = str;
@@ -163,6 +164,13 @@ void app_main(void) {
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
 
 	err = loadSettings();
+
+	// httpActive = xSemaphoreCreateBinary();
+	// xSemaphoreGive(httpActive);
+
+	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
+	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
+
 	wifiConnect();
 
 	board_i2c_recover();

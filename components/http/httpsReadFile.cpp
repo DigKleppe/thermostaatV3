@@ -194,7 +194,7 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 
 		return -1;
 	}
-    ESP_LOGI(TAG, "Client open");
+    ESP_LOGI(TAG, "Client open %s", client.);
 
 	content_length = esp_http_client_fetch_headers(client);
     ESP_LOGI(TAG, "headers fetchted cl: %d ", content_length );

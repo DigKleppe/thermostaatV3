@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "KNMItask.h"
 #include "clockTask.h"
 #include "httpsReadFile.h"
 #include "passwords.pwd"
 #include "wifiConnect.h"
-#include "KNMItask.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
@@ -18,8 +18,9 @@
 #include "esp_crt_bundle.h"
 #endif
 
-extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+// extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+
+extern volatile bool hpptActive;
 
 // --- KNMI API gegevens ---
 // #define API_KEY in passwords.pwd
@@ -45,14 +46,14 @@ static float get_temperature(void) {
 	float temp = -999.0;
 	float value1, value2;
 	struct tm *t;
-	char dateTime[64];		
-	 //  = "2026-08-10T12:00:00Z/2026-08-10T13:00:00Z";
-	char * readBuffer = (char *) heap_caps_malloc(READBUFFERSIZE+1, MALLOC_CAP_SPIRAM); //malloc(READBUFFERSIZE);
+	char dateTime[64];
+	//  = "2026-08-10T12:00:00Z/2026-08-10T13:00:00Z";
+	char *readBuffer = (char *)heap_caps_malloc(READBUFFERSIZE + 1, MALLOC_CAP_SPIRAM); // malloc(READBUFFERSIZE);
 	if (readBuffer == NULL) {
 		ESP_LOGE(TAG, "No memory for readBuffer");
 		return -999;
 	}
- // prepare request period for last sample (latest does not work)
+	// prepare request period for last sample (latest does not work)
 	time_t now = time(NULL); // Get current time
 	time_t firstValue = now - FIRSTSAMPLEOFFSET * 60;
 	t = localtime(&now);
@@ -88,7 +89,7 @@ static float get_temperature(void) {
 	esp_http_client_handle_t client = esp_http_client_init(&config);
 	if (client == NULL) {
 		ESP_LOGE(TAG, " HTTP client not initialized");
-		free (readBuffer);
+		free(readBuffer);
 		return -999;
 	}
 	// API-sleutel toevoegen in de Authorization header
@@ -120,11 +121,11 @@ static float get_temperature(void) {
 					if (pValue) {
 						if (sscanf(pValue, "\"values\":[%f,%f]", &value1, &value2) == 2) {
 							temp = value2;
-						//	printf("2 values %f", temp);
+							//	printf("2 values %f", temp);
 						} else {
 							if (sscanf(pValue, "\"values\":[%f]", &value1) == 1) {
 								temp = value1;
-							//	printf("1 value %f", temp);
+								//	printf("1 value %f", temp);
 							}
 						}
 					} else
@@ -139,7 +140,7 @@ static float get_temperature(void) {
 			ESP_LOGE(TAG, "Timeout HTTP request");
 	} while (mssg.len > 0);
 
-	free (readBuffer);
+	free(readBuffer);
 	return temp;
 }
 
@@ -148,24 +149,35 @@ void KNMItask(void *parameters) {
 	while (!timeIsSet)
 		vTaskDelay(pdMS_TO_TICKS(1000));
 
-	ESP_LOGI(TAG, "Start KNMI Temperatuur opvrager - Wilhelminadorp");
 
-	if (httpsReqMssgBox == NULL) { // once
-		httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
-		httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
-	} else {
-		xQueueReset(httpsReqMssgBox);
-		xQueueReset(httpsReqRdyMssgBox);
-	}
+
+	// if (httpsReqMssgBox == NULL) { // once
+	// 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
+	// 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
+	// } else {
+	// 	xQueueReset(httpsReqMssgBox);
+	// 	xQueueReset(httpsReqRdyMssgBox);
+	// }
 	while (1) {
-		buitenTemperatuur = get_temperature();
+		//	if (xSemaphoreTake(hpptReqSemphore, portMAX_DELAY) == pdTRUE) { // shared with updateTask
+		do {
+			ESP_LOGI(TAG, "wait semaphore ");
+			vTaskDelay(100 / portMAX_DELAY);
+		} while (hpptActive);
 
+		hpptActive = true; // sorry
+		ESP_LOGI(TAG, "semaphore taken");
+		buitenTemperatuur = get_temperature();
+		//	xSemaphoreGive(hpptReqSemphore);
+
+		hpptActive = false; // sorry
 		if (buitenTemperatuur != -999.0) {
 			ESP_LOGI(TAG, "🌡️ Temperatuur in Wilhelminadorp: %.1f °C", buitenTemperatuur);
 		} else {
 			ESP_LOGE(TAG, "❌ Kon temperatuur niet ophalen");
 		}
 		// Wacht 5 minuten voor volgende meting
-		vTaskDelay(pdMS_TO_TICKS(5 * 60 *60 * 1000));
+		//	vTaskDelay(pdMS_TO_TICKS(5 * 60 * 60 * 1000));
+		vTaskDelay(pdMS_TO_TICKS(30 * 60 * 1000));
 	}
 }
