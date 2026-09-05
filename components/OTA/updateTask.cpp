@@ -37,6 +37,9 @@ volatile bool updateTaskHasFinished;
 // extern SemaphoreHandle_t hpptReqSemphore;
 extern volatile bool hpptActive;
 
+TaskHandle_t updateFWTaskh;
+TaskHandle_t updateSPIFFSTaskh;
+
 typedef struct {
 	char *infoFileName;
 	char *dest;
@@ -66,8 +69,6 @@ void updateTask(void *pvParameter) {
 	bool doUpdate;
 	bool error = false;
 	char newVersion[MAX_STORAGEVERSIONSIZE];
-	TaskHandle_t updateFWTaskh;
-	TaskHandle_t updateSPIFFSTaskh;
 
 	while (!timeIsSet) {
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -98,7 +99,7 @@ void updateTask(void *pvParameter) {
 	error = false;
 
 	do {
-	//	ESP_LOGI(TAG, "wait semaphore ");
+		//	ESP_LOGI(TAG, "wait semaphore ");
 		vTaskDelay(100 / portMAX_DELAY);
 	} while (hpptActive);
 
@@ -177,9 +178,10 @@ void updateTask(void *pvParameter) {
 		updateTaskHasFinished = true;
 		vTaskDelay(10);
 	}
-//	xSemaphoreGive(hpptReqSemphore);
+	//	xSemaphoreGive(hpptReqSemphore);
 
 	hpptActive = false; // sorry
+	updateTaskh = NULL;
 	vTaskDelete(NULL);
 }
 #endif

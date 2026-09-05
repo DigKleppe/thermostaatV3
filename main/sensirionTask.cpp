@@ -6,6 +6,7 @@
  */
 
 // #define LOG_LOCAL_LEVEL ESP_LOG_NONE
+//#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -226,7 +227,7 @@ void sensirionTask(void *pvParameter) {
 				humAverager.write(lastVal.hum * 1000.0);
 			}
 
-			updatePID(lastVal.temperature);
+			updatePID(lastVal.temperature - userSettings.temperatureOffset);
 
 			// ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
 
@@ -242,6 +243,7 @@ void sensirionTask(void *pvParameter) {
 					sprintf(displayStr[n], "%2.1f", lastVal.hum - userSettings.RHoffset);
 					break;
 				case 2:
+					ESP_LOGI(TAG, "CO2 value: %f ", lastVal.co2);
 					if ((lastVal.co2 > 9999) || (lastVal.co2 < 350)) // error sensor
 						sprintf(displayStr[n], "----");
 					else
@@ -264,7 +266,6 @@ void sensirionTask(void *pvParameter) {
 				avgVal.timeStamp = timeStamp;
 				addToLog(avgVal);			  // add to cyclic log buffer
 				lastminute = timeinfo.tm_min; // every minute
-				ESP_LOGI(TAG, "CO2 value: %f ", avgVal.co2);
 				if (userSettings.isCalibrated && (avgVal.co2 < 400)) {
 					if (co2autoCalTimer > 0)
 						co2autoCalTimer--;

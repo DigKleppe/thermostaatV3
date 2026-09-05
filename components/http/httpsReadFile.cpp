@@ -5,6 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 #include "esp_log.h"
 #include "lwip/err.h"
 
@@ -14,127 +15,123 @@
 #include "esp_crt_bundle.h"
 #endif
 #include "esp_event.h"
-#include <sys/param.h>
-#include <ctype.h>
 #include "esp_system.h"
+#include <ctype.h>
+#include <sys/param.h>
 
 #include "esp_http_client.h"
 #include "httpsReadFile.h"
 
-
 static const char *TAG = "httpsReadFile";
 
- extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
- extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 QueueHandle_t httpsReqMssgBox;
 QueueHandle_t httpsReqRdyMssgBox;
-#define MAX_HTTP_RECV_BUFFER 512
-#define MAX_HTTP_OUTPUT_BUFFER 2048
+//#define MAX_HTTP_RECV_BUFFER 512
+//#define MAX_HTTP_OUTPUT_BUFFER 2048
+#define MAX_HTTP_OUTPUT_BUFFER 512
 
-uint8_t buf[HTTPSBUFSIZE];
-
-esp_err_t _http_event_handler(esp_http_client_event_t *evt)
-{
-    static char *output_buffer;  // Buffer to store response of http request from event handler
-    static int output_len;       // Stores number of bytes read
-    switch(evt->event_id) {
-        case HTTP_EVENT_ERROR:
-            ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
-            break;
-        case HTTP_EVENT_ON_CONNECTED:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
-            break;
-        case HTTP_EVENT_HEADER_SENT:
-            ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
-            break;
-        case HTTP_EVENT_ON_HEADER:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
-            break;
-        case HTTP_EVENT_ON_DATA:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            // Clean the buffer in case of a new request
-            if (output_len == 0 && evt->user_data) {
-                // we are just starting to copy the output data into the use
-                memset(evt->user_data, 0, MAX_HTTP_OUTPUT_BUFFER);
-            }
-            /*
-             *  Check for chunked encoding is added as the URL for chunked encoding used in this example returns binary data.
-             *  However, event handler can also be used in case chunked encoding is used.
-             */
-            if (!esp_http_client_is_chunked_response(evt->client)) {
-                // If user_data buffer is configured, copy the response into the buffer
-                int copy_len = 0;
-                if (evt->user_data) {
-                    // The last byte in evt->user_data is kept for the NULL character in case of out-of-bound access.
-                    copy_len = MIN(evt->data_len, (MAX_HTTP_OUTPUT_BUFFER - output_len));
-                    if (copy_len) {
-                        memcpy(evt->user_data + output_len, evt->data, copy_len);
-                    }
-                } else {
-                    int content_len = esp_http_client_get_content_length(evt->client);
-                    if (output_buffer == NULL) {
-                        // We initialize output_buffer with 0 because it is used by strlen() and similar functions therefore should be null terminated.
-                        output_buffer = (char *) calloc(content_len + 1, sizeof(char));
-                        output_len = 0;
-                        if (output_buffer == NULL) {
-                            ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
-                            return ESP_FAIL;
-                        }
-                    }
-                    copy_len = MIN(evt->data_len, (content_len - output_len));
-                    if (copy_len) {
-                        memcpy(output_buffer + output_len, evt->data, copy_len);
-                    }
-                }
-                output_len += copy_len;
-            }
-
-            break;
-        case HTTP_EVENT_ON_FINISH:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-            if (output_buffer != NULL) {
-#if CONFIG_EXAMPLE_ENABLE_RESPONSE_BUFFER_DUMP
-                ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
-#endif
-                free(output_buffer);
-                output_buffer = NULL;
-            }
-            output_len = 0;
-            break;
-        case HTTP_EVENT_DISCONNECTED:
-		{
-            ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            int mbedtls_err = 0;
-            esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
-            if (err != 0) {
-                ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
-                ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
-            }
-            if (output_buffer != NULL) {
-                free(output_buffer);
-                output_buffer = NULL;
-            }
-            output_len = 0;
+esp_err_t _http_event_handler(esp_http_client_event_t *evt) {
+	static char *output_buffer; // Buffer to store response of http request from event handler
+	static int output_len;		// Stores number of bytes read
+	switch (evt->event_id) {
+	case HTTP_EVENT_ERROR:
+		ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
+		break;
+	case HTTP_EVENT_ON_CONNECTED:
+		ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
+		break;
+	case HTTP_EVENT_HEADER_SENT:
+		ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
+		break;
+	case HTTP_EVENT_ON_HEADER:
+		ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
+		break;
+	case HTTP_EVENT_ON_DATA:
+		ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+		// Clean the buffer in case of a new request
+		if (output_len == 0 && evt->user_data) {
+			// we are just starting to copy the output data into the use
+			memset(evt->user_data, 0, MAX_HTTP_OUTPUT_BUFFER);
 		}
-            break;
-        case HTTP_EVENT_REDIRECT:
-            ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
-            esp_http_client_set_header(evt->client, "From", "user@example.com");
-            esp_http_client_set_header(evt->client, "Accept", "text/html");
-            esp_http_client_set_redirection(evt->client);
-            break;
-    }
-    return ESP_OK;
+		/*
+		 *  Check for chunked encoding is added as the URL for chunked encoding used in this example returns binary data.
+		 *  However, event handler can also be used in case chunked encoding is used.
+		 */
+		if (!esp_http_client_is_chunked_response(evt->client)) {
+			// If user_data buffer is configured, copy the response into the buffer
+			int copy_len = 0;
+			if (evt->user_data) {
+				// The last byte in evt->user_data is kept for the NULL character in case of out-of-bound access.
+				copy_len = MIN(evt->data_len, (MAX_HTTP_OUTPUT_BUFFER - output_len));
+				if (copy_len) {
+					memcpy(evt->user_data + output_len, evt->data, copy_len);
+				}
+			} else {
+				int content_len = esp_http_client_get_content_length(evt->client);
+				if (output_buffer == NULL) {
+					// We initialize output_buffer with 0 because it is used by strlen() and similar functions therefore should be null terminated.
+					output_buffer = (char *)calloc(content_len + 1, sizeof(char));
+					output_len = 0;
+					if (output_buffer == NULL) {
+						ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
+						return ESP_FAIL;
+					}
+				}
+				copy_len = MIN(evt->data_len, (content_len - output_len));
+				if (copy_len) {
+					memcpy(output_buffer + output_len, evt->data, copy_len);
+				}
+			}
+			output_len += copy_len;
+		}
+
+		break;
+	case HTTP_EVENT_ON_FINISH:
+		ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
+		if (output_buffer != NULL) {
+#if CONFIG_EXAMPLE_ENABLE_RESPONSE_BUFFER_DUMP
+			ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
+#endif
+			free(output_buffer);
+			output_buffer = NULL;
+		}
+		output_len = 0;
+		break;
+	case HTTP_EVENT_DISCONNECTED: {
+		ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
+		int mbedtls_err = 0;
+		esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
+		if (err != 0) {
+			ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
+			ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
+		}
+		if (output_buffer != NULL) {
+			free(output_buffer);
+			output_buffer = NULL;
+		}
+		output_len = 0;
+	} break;
+	case HTTP_EVENT_REDIRECT:
+		ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
+		esp_http_client_set_header(evt->client, "From", "user@example.com");
+		esp_http_client_set_header(evt->client, "Accept", "text/html");
+		esp_http_client_set_redirection(evt->client);
+		break;
+	}
+	return ESP_OK;
 }
 
 int httpsReadFile(char *url, char *dest, int maxChars) {
-	int read_len =0, content_length, status;
+	int read_len = 0, content_length, status;
 
 	esp_http_client_config_t config = {
-		.url = url, 
-        .cert_pem = server_root_cert_pem_start,
-		
+		.url = url,
+	//	.cert_pem = server_root_cert_pem_start,
+		.cert_pem = NULL,
+
 	};
 
 	esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -147,15 +144,14 @@ int httpsReadFile(char *url, char *dest, int maxChars) {
 	read_len = esp_http_client_read(client, dest, maxChars);
 
 	status = esp_http_client_get_status_code(client);
-	ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %" PRId64,
-             status, esp_http_client_get_content_length(client));
+	ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %" PRId64, status, esp_http_client_get_content_length(client));
 
-	if (content_length > maxChars) 
-        read_len = -1;
+	if (content_length > maxChars)
+		read_len = -1;
 	if ((status > 300) || (status < 200))
-	    read_len = -1;
+		read_len = -1;
 
-	if ( read_len < 0 )
+	if (read_len < 0)
 		*dest = 0;
 
 	esp_http_client_close(client);
@@ -165,7 +161,7 @@ int httpsReadFile(char *url, char *dest, int maxChars) {
 
 int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	httpsMssg_t mssg;
-    esp_http_client_handle_t client;
+	esp_http_client_handle_t client;
 	int read_len = 0, total_read_len = 0, content_length, status;
 
 	if (httpsRegParams->destbuffer == NULL) {
@@ -177,7 +173,7 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 		ESP_LOGE(TAG, "httpClientHandle not available");
 		return -1;
 	}
-    
+
 	// esp_http_client_config_t config = {
 	// 	.url = httpsRegParams->httpsURL,
 	// 	// .crt_bundle_attach = esp_crt_bundle_attach,
@@ -189,15 +185,15 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
 		ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
 
-        ESP_LOGE(TAG,"free : %d", esp_get_free_internal_heap_size()); 
-        ESP_LOGE(TAG,"min: %d", esp_get_minimum_free_heap_size());
+		ESP_LOGE(TAG, "free : %d", esp_get_free_internal_heap_size());
+		ESP_LOGE(TAG, "min: %d", esp_get_minimum_free_heap_size());
 
 		return -1;
 	}
-    ESP_LOGI(TAG, "Client open %s", client.);
+	ESP_LOGI(TAG, "Client open");
 
 	content_length = esp_http_client_fetch_headers(client);
-    ESP_LOGI(TAG, "headers fetchted cl: %d ", content_length );
+	ESP_LOGI(TAG, "headers fetchted cl: %d ", content_length);
 	status = esp_http_client_get_status_code(client);
 
 	ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %" PRId64, status, esp_http_client_get_content_length(client));
@@ -205,14 +201,15 @@ int httpsReadFile(const httpsRegParams_t *httpsRegParams) {
 	if ((status > 300) || (status < 200)) {
 		total_read_len = -1;
 		ESP_LOGE(TAG, "HTTP Stream reader Status = %d", status);
-	}
-	else {
+	} else {
+        xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
 		do {
-         //   if(1) {
 			if (xQueueReceive(httpsReqRdyMssgBox, &mssg, MSSGBOX_TIMEOUT)) {
+                ESP_LOGI(TAG, "reading client");
 				read_len = esp_http_client_read(client, (char *)httpsRegParams->destbuffer, httpsRegParams->maxChars);
 				mssg.len = read_len;
-            //   	ESP_LOGI(TAG, "readfile read %d" , read_len);
+				ESP_LOGI(TAG, "readfile read %d" , read_len);
+                printf(".");
 				xQueueSend(httpsReqMssgBox, &mssg, MSSGBOX_TIMEOUT);
 
 			} else {
@@ -241,8 +238,8 @@ void httpsGetRequestTask(void *pvparameters) {
 		xQueueReset(httpsReqMssgBox);
 		xQueueReset(httpsReqRdyMssgBox);
 	}
-    httpsReadFile(httpsRegParams);
+	httpsReadFile(httpsRegParams);
 
-	ESP_LOGI(TAG, "Finish https_request task" );
+	ESP_LOGI(TAG, "Finish https_request task");
 	vTaskDelete(NULL);
 }

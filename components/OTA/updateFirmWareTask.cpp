@@ -24,14 +24,11 @@
 #include "esp_crt_bundle.h"
 #endif
 #ifdef USE_OTA
-//#define DOWNLOAD_ONLY
+// #define DOWNLOAD_ONLY
 
 static uint8_t ota_write_data[BUFFSIZE];
 
-
 extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
-
 
 static const char *TAG = "updateFirmwareTask";
 
@@ -62,8 +59,9 @@ void updateFirmwareTask(void *pvParameter) {
 	config.method = HTTP_METHOD_GET;
 	config.timeout_ms = 10000;
 	config.crt_bundle_attach = esp_crt_bundle_attach;
-	config.cert_pem = server_root_cert_pem_start;						// NULL betekent: gebruik de ingebouwde certificatenbundel
-//	config.skip_cert_common_name_check = false; // CN validatie inschakelen
+//	config.cert_pem = server_root_cert_pem_start; // NULL betekent: gebruik de ingebouwde certificatenbundel
+												  //	config.skip_cert_common_name_check = false; // CN validatie inschakelen
+	config.cert_pem = NULL; // NULL betekent: gebruik de ingebouwde certificatenbundel
 	config.keep_alive_enable = false;
 
 	ESP_LOGI(TAG, "Request URL: %s", updateURL);
@@ -72,17 +70,16 @@ void updateFirmwareTask(void *pvParameter) {
 	if (client == NULL) {
 		ESP_LOGE(TAG, " HTTP client not initialized!");
 		updateStatus = UPDATE_ERROR;
+		updateFWTaskh = NULL;
 		vTaskDelete(NULL);
 	}
 
+	// httpsRegParams.httpsServer = wifiSettings.upgradeServer;
+	//  strcpy(updateURL, wifiSettings.upgradeURL);
+	//  strcat(updateURL, "/");
+	//  strcat(updateURL, wifiSettings.upgradeFileName);
+	//	httpsRegParams.httpsURL = updateURL;
 
-
-	//httpsRegParams.httpsServer = wifiSettings.upgradeServer;
-	// strcpy(updateURL, wifiSettings.upgradeURL);
-	// strcat(updateURL, "/");
-	// strcat(updateURL, wifiSettings.upgradeFileName);
-//	httpsRegParams.httpsURL = updateURL;
-	
 	httpsRegParams.httpClientHandle = client;
 	httpsRegParams.destbuffer = ota_write_data;
 	httpsRegParams.maxChars = sizeof(ota_write_data);
@@ -93,7 +90,8 @@ void updateFirmwareTask(void *pvParameter) {
 	if (update_partition == NULL) {
 		ESP_LOGE(TAG, "update_partition not valid");
 		updateStatus = UPDATE_ERROR;
-		vTaskDelete( NULL);	
+		updateFWTaskh = NULL;
+		vTaskDelete(NULL);
 	}
 
 	if (configured != running) {
@@ -110,11 +108,11 @@ void updateFirmwareTask(void *pvParameter) {
 
 	while (!rdy && (err == ESP_OK)) {
 		xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
-	//	ESP_LOGI(TAG, "next");
+		//	ESP_LOGI(TAG, "next");
 		if (xQueueReceive(httpsReqMssgBox, (void *)&mssg, (CONFIG_OTA_RECV_TIMEOUT / portTICK_PERIOD_MS))) {
 			data_read = mssg.len;
 			block++;
-		//	ESP_LOGI(TAG, "Reading block %d bytes %d ", block ,data_read);
+			//	ESP_LOGI(TAG, "Reading block %d bytes %d ", block ,data_read);
 			putchar('.');
 			if (data_read < 0) {
 				ESP_LOGE(TAG, "Error: SSL data read error");
@@ -151,10 +149,9 @@ void updateFirmwareTask(void *pvParameter) {
 								ESP_LOGE(TAG, "esp_ota_begin failed (%s)", esp_err_to_name(err));
 								esp_ota_abort(update_handle);
 								err = !ESP_OK;
-							}
-							else
+							} else
 								ESP_LOGI(TAG, "esp_ota_begin succeeded");
-#endif								
+#endif
 
 						} else {
 							ESP_LOGE(TAG, "received failed");
@@ -190,7 +187,7 @@ void updateFirmwareTask(void *pvParameter) {
 		}
 
 	} // end while (! rdy && !err)
-	if ( binary_file_length == 0) {
+	if (binary_file_length == 0) {
 		ESP_LOGE(TAG, "No data received");
 		err = !ESP_OK;
 	}
@@ -223,6 +220,7 @@ void updateFirmwareTask(void *pvParameter) {
 		updateStatus = UPDATE_ERROR;
 
 	ESP_LOGI(TAG, "finished");
+	updateFWTaskh = NULL;
 	vTaskDelay(10);
 
 	vTaskDelete(NULL);

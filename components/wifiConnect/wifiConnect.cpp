@@ -5,7 +5,7 @@ handles wifi connect process
 
 */
 
-//#define USE_OTA
+// #define USE_OTA
 
 #include "esp_event.h"
 #include "esp_log.h"
@@ -123,10 +123,12 @@ void sendLogInMssg(void);
 #endif
 
 wifiSettings_t wifiSettings;
+TaskHandle_t connectTaskh;
 
 #ifdef USE_OTA
 wifiSettings_t wifiSettingsDefaults = {
 	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", FIRMWARE_VERSION, SPIFFS_VERSION, false};
+TaskHandle_t updateTaskh;
 #else
 wifiSettings_t wifiSettingsDefaults = {
 	ESP_WIFI_SSID,
@@ -449,7 +451,7 @@ void connectTask(void *pvParameters) {
 	int timeOutCounter = 0;
 #ifdef USE_OTA
 	int updateTimer = 0; //  CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60;
-	TaskHandle_t updateTaskHandle;
+
 #endif
 
 	s_wifi_event_group = xEventGroupCreate();
@@ -546,7 +548,7 @@ void connectTask(void *pvParameters) {
 			case WPS_TIMEOUT: {
 				ESP_LOGE(TAG, "WPS timeout");
 				esp_wifi_wps_disable();
-			//	connectStep = 50; // try softap
+				//	connectStep = 50; // try softap
 				s_retry_num = 0;
 				esp_wifi_connect();
 				connectStatus = CONNECTING;
@@ -623,7 +625,7 @@ void connectTask(void *pvParameters) {
 			case CONNECTED:
 			case IP_RECEIVED:
 			case CONNECT_READY:
-				xTaskCreate(&updateTask, "updateTask", 2 * 8192, NULL, 1, &updateTaskHandle);
+				xTaskCreate(&updateTask, "updateTask", 6 * 1024, NULL, 1, &updateTaskh);
 				do {
 					vTaskDelay(100 / portTICK_PERIOD_MS);
 				} while (!updateTaskHasFinished);
@@ -688,7 +690,7 @@ void wifiConnect(void) {
 		strcpy((char *)wifiSettings.pwd, wifiSettingsDefaults.pwd);
 		saveSettings();
 	}
-	xTaskCreate(connectTask, "connectTask", configMINIMAL_STACK_SIZE * 5, NULL, 5, NULL);
+	xTaskCreate(connectTask, "connectTask", 1024 * 3, NULL, 5, &connectTaskh);
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
 void restartWifi(void) { connectRestart = true; }

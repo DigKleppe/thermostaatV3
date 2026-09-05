@@ -1,6 +1,5 @@
 #include "KNMItask.h"
 #include "PID.h"
-#include "autoCalTask.h"
 #include "clockTask.h"
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
@@ -10,9 +9,10 @@
 #include "esp_memory_utils.h"
 #include "esp_rom_sys.h"
 #include "freertos/FreeRTOS.h"
+//#include "freertos/semphr.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "guiTask.h"
+#include "httpsReadFile.h"
 #include "i2c.h"
 #include "lvgl.h"
 #include "nvs.h"
@@ -20,7 +20,7 @@
 #include "sensirionTask.h"
 #include "settings.h"
 #include "wifiConnect.h"
-#include "httpsReadFile.h"
+#include "autoCalTask.h"
 
 #ifdef USE_OTA
 #include "updateTask.h"
@@ -52,8 +52,6 @@ int rssi;
 #define BOARD_I2C_SCL GPIO_NUM_7
 
 volatile bool hpptActive; // rtos semaphore not working
-
-
 
 static void board_i2c_recover(void) {
 	gpio_config_t io_conf = {0};
@@ -93,15 +91,12 @@ static void board_i2c_recover(void) {
 	vTaskDelay(pdMS_TO_TICKS(20));
 }
 
-TaskHandle_t guiCommonTaskh;
 TaskHandle_t guiTaskh;
 TaskHandle_t SensirionTaskh;
-TaskHandle_t connectTaskh;
 TaskHandle_t autocalTaskh;
 TaskHandle_t KNMItaskh;
 TaskHandle_t udpTaskh;
 TaskHandle_t clockTaskh;
-TaskHandle_t updateTaskh;
 
 void sensirionTask(void *pvParameter);
 
@@ -124,7 +119,7 @@ void setBacklight(int value) { // 5-100
 
 void app_main(void) {
 	esp_err_t err;
-
+	int presc = 1;
 	int minuteCntr = 0;
 	char str[30];
 	char str2[25];
@@ -178,22 +173,21 @@ void app_main(void) {
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
 
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 3 * 1024, NULL, 2, &guiTaskh, 1);
+	xTaskCreatePinnedToCore(guiTask, "guiTask", 2 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
-	xTaskCreate(clockTask, "clock", 3 * 1024, NULL, 0, &clockTaskh);
+	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
-	xTaskCreate(autoCalTask, "autoCalTask", 8192, NULL, 0, &autocalTaskh);
-	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, &udpTaskh);
-	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
+	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
+	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
+	xTaskCreate(KNMItask, "KMNItask", 2 * 1024, NULL, 0, &KNMItaskh);
 
-
-// while(1) {
-// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;
-//     // free_heap_size = esp_get_free_heap_size();
-//     // min_free_heap_size = esp_get_minimum_free_heap_size(); 
-//     // printf("\n free heap size = %d \t  min_free_heap_size = %d \n",free_heap_size,min_free_heap_size);   
-// 	vTaskDelay(1000);
-// }
+	// while(1) {
+	// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;
+	//     // free_heap_size = esp_get_free_heap_size();
+	//     // min_free_heap_size = esp_get_minimum_free_heap_size();
+	//     // printf("\n free heap size = %d \t  min_free_heap_size = %d \n",free_heap_size,min_free_heap_size);
+	// 	vTaskDelay(1000);
+	// }
 	setBacklight(userSettings.backLight);
 	bsp_display_unlock();
 
@@ -206,7 +200,7 @@ void app_main(void) {
 			lastSecond = timeinfo.tm_sec; // every second
 			timeStamp++;
 			upTime++;
-			upTimeHrs = upTime/3600;
+			upTimeHrs = upTime / 3600;
 			if (timeStamp == 0)
 				timeStamp++;
 		}
@@ -246,12 +240,28 @@ void app_main(void) {
 		if (displayMssgBox)
 			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 
-		// while(1) {
-		//    			// stackWm[0] = uxTaskGetStackHighWaterMark( connectTaskh );
-		// 			// stackWm[1] = uxTaskGetStackHighWaterMark( guiCommonTaskh );
-		// 			// stackWm[2] = uxTaskGetStackHighWaterMark( guiTaskh );
-		// 			// stackWm[3] = uxTaskGetStackHighWaterMark( SensirionTaskh );
-		// printf("freeHeapSize %d\n", xPortGetFreeHeapSize());
+		// if (presc-- <= 0) {
+		// 	presc = 20;
+		// 	ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
+		// 	ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
+		// 	ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
+		// 	ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+		// 	ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
+		// 	ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
+		// 	ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
+		// 	ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
+		// 	ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+		// 	if (updateTaskh != NULL) {
+		// 		ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
+		// 		if (updateFWTaskh != NULL)
+		// 			ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
+
+		// 		if (updateSPIFFSTaskh != NULL)
+		// 			ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
+		// 	}
+		// }
+
+
 		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
 		// heap_caps_print_heap_info(MALLOC_CAP_DMA);
 		// vTaskDelay(1000);

@@ -5,7 +5,7 @@
  *      Author: dig
  */
 
-
+#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 
 #include "settings.h"
 #include "sensirionTask.h"

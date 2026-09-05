@@ -25,8 +25,6 @@ extern "C" {
 #define ESP_WIFI_SSID "test"
 #define ESP_WIFI_PASS "Yellowstone"
 
-
-
 typedef struct {
 	char SSID[33];
 	char pwd[64];
@@ -74,6 +72,13 @@ typedef enum {
 extern volatile connectStatus_t connectStatus;
 extern uint32_t connectRetries;
 extern uint32_t disconnects;
+
+
+#ifdef USE_OTA
+	extern TaskHandle_t updateTaskh;
+#endif
+
+extern TaskHandle_t connectTaskh;
 
 void wifiConnect(void);
 void restartWifi(void);

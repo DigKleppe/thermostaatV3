@@ -108,9 +108,9 @@ static float get_temperature(void) {
 	xTaskCreate(httpsGetRequestTask, "httpsReqTask", 4 * 1024, (void *)&httpsRegParams, 0, NULL);
 
 	do {
-		xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
+		//xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
 		mssg.len = 0;
-		if (xQueueReceive(httpsReqMssgBox, (void *)&mssg, (5000 / portTICK_PERIOD_MS))) {
+		if (xQueueReceive(httpsReqMssgBox, (void *)&mssg, (15000 / portTICK_PERIOD_MS))) {
 			if (mssg.len) {
 				readBuffer[mssg.len] = 0;
 				ESP_LOGI(TAG, "%d %s", mssg.len, readBuffer);
@@ -149,20 +149,11 @@ void KNMItask(void *parameters) {
 	while (!timeIsSet)
 		vTaskDelay(pdMS_TO_TICKS(1000));
 
-
-
-	// if (httpsReqMssgBox == NULL) { // once
-	// 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
-	// 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
-	// } else {
-	// 	xQueueReset(httpsReqMssgBox);
-	// 	xQueueReset(httpsReqRdyMssgBox);
-	// }
 	while (1) {
 		//	if (xSemaphoreTake(hpptReqSemphore, portMAX_DELAY) == pdTRUE) { // shared with updateTask
 		do {
 			ESP_LOGI(TAG, "wait semaphore ");
-			vTaskDelay(100 / portMAX_DELAY);
+			vTaskDelay(1000 / portMAX_DELAY);
 		} while (hpptActive);
 
 		hpptActive = true; // sorry

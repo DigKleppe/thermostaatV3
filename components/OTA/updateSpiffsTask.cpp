@@ -56,7 +56,8 @@ void updateSpiffsTask(void *pvParameter) {
 	config.method = HTTP_METHOD_GET;
 	config.timeout_ms = 10000;
 	config.crt_bundle_attach = esp_crt_bundle_attach;
-	config.cert_pem = server_root_cert_pem_start;						// NULL betekent: gebruik de ingebouwde certificatenbundel
+//	config.cert_pem = server_root_cert_pem_start;						
+	config.cert_pem = NULL; // NULL betekent: gebruik de ingebouwde certificatenbundel
 //	config.skip_cert_common_name_check = false; // CN validatie inschakelen
 	config.keep_alive_enable = false;
 
@@ -65,6 +66,7 @@ void updateSpiffsTask(void *pvParameter) {
 	esp_http_client_handle_t client = esp_http_client_init(&config);
 	if (client == NULL) {
 		ESP_LOGE(TAG, " HTTP client not initialized!");
+		updateSPIFFSTaskh = NULL;
 		updateStatus = UPDATE_ERROR;
 		vTaskDelete(NULL);
 	}
@@ -132,6 +134,7 @@ void updateSpiffsTask(void *pvParameter) {
 		updateStatus = UPDATE_ERROR;
 
 	ESP_LOGI(TAG, "finished");
+	updateSPIFFSTaskh = NULL;
 	vTaskDelay(10);
 
 	vTaskDelete (NULL);

@@ -19,6 +19,11 @@ void updateTask(void *pvParameter);
 extern volatile bool forceUpdate;
 extern volatile bool updateTaskHasFinished;
 
+
+extern TaskHandle_t updateFWTaskh;
+extern TaskHandle_t updateSPIFFSTaskh;
+
+
 typedef enum {UPDATE_RDY, UPDATE_BUSY, UPDATE_ERROR } updateStatus_t;
 extern volatile updateStatus_t updateStatus;
 
