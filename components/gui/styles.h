@@ -36,7 +36,7 @@ extern lv_style_t styleStartScreen;
 #define DEFAULTBORDERCOLOR			lv_color_make(0, 255, 0)
 #define DEFAULTBACKGROUNDCOLOR 		lv_color_black()
 
-#define MEASFONT					thin75 //cantarelLight75  //dejavusansEL75
+#define MEASFONT					thinLarge // thin75 //cantarelLight75  //dejavusansEL75
 #define MEASUNITFONT				thin50 //cantarelLight50 // insloata60_4bppSub
 #define MEASNAMEFONT 				cantarel25  //cantarelRegular20 // lv_font_montserrat_20
 #define MEASVALUECOLOR				DEFAULTVALUECOLOR

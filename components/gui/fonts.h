@@ -48,7 +48,8 @@ extern const lv_font_t dejavusansEL44;
 // extern const lv_font_t ManjariThin50;
 extern const lv_font_t thin30;
 extern const lv_font_t thin50;
-extern const lv_font_t thin75;
+//extern const lv_font_t thin75;
+extern const lv_font_t thinLarge;
 
 
 
