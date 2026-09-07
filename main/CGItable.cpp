@@ -12,7 +12,7 @@
 #include <cstddef>
 
 // @formatter:off
-// do not alter
+
 const tCGI CGIurls[] = {
 	{"/cgi-bin/getSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getSettingsScript},
 	{"/cgi-bin/getAdvSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getAdvSettingsScript},
@@ -23,6 +23,7 @@ const tCGI CGIurls[] = {
 	{"/cgi-bin/getSensorName", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getSensorNameScript},
 	{"/cgi-bin/clearLog", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)clearLogScript},
 	{"/cgi-bin/forgetWifi", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)forgetWifiScript},
+	{"/cgi-bin/checkUpdates", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)checkUpdatesScript},
 	// { "/cgi-bin/saveSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) saveSettingsScript},
 	// { "/cgi-bin/cancelSettings", (tCGIHandler_t) readCGIvalues, (CGIresponseFileHandler_t) cancelSettingsScript},
 	{NULL, NULL, NULL} // last
