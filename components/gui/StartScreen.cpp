@@ -7,9 +7,10 @@
 
 #include "StartScreen.h"
 #include "lcd.h"
-#include "softwareVersions.h"
+//#include "softwareVersions.h"
 #include "styles.h"
 #include <stdio.h>
+#include "wifiConnect.h"
 
 #ifdef LV_CONF_INCLUDE_SIMPLE
 #include "lvgl.h"
@@ -56,7 +57,7 @@ StartScreen::StartScreen(void) {
 	lv_obj_set_size(swVersionLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionLabel, &styleStartScreen, 0);
 	lv_obj_align_to(swVersionLabel, swVersionNameLabel, LV_ALIGN_TOP_RIGHT, 0, SPACING);
-	lv_label_set_text_fmt (swVersionLabel,(char *) FIRMWARE_VERSION);
+	lv_label_set_text_fmt (swVersionLabel,(char *) &wifiSettings.firmwareVersion);
 
 	lv_obj_set_size(swVersionDateLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionDateLabel, &styleStartScreen, 0);

@@ -346,7 +346,7 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PWM", PIDsetting);
 		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
 	#ifdef USE_OTA
-		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", getFirmWareVersion());
+		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", wifiSettings.firmwareVersion);
 		len += sprintf(pBuffer + len, "%s,%s\n", "SPIFFS versie", wifiSettings.SPIFFSversion);
 	#endif
 		return len;

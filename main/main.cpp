@@ -42,10 +42,9 @@ esp_err_t init_spiffs(void);
 
 #define TAG "main"
 
-extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start"); // dummy, to pull in for linker
+//extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start"); // dummy, to pull in for linker
 const char *dummy;
-const char firmWareVersion[] = {"0.0"}; // just for info , set this in firmWareVersion.txt for update
-const char *getFirmWareVersion() { return firmWareVersion; }
+
 int moduleNr = 3; // sensor 3 for WTW
 int rssi;
 #define BOARD_I2C_SDA GPIO_NUM_15
@@ -107,7 +106,7 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-const char *dummycp;
+//const char *dummycp;
 
 #define MAXBL 50
 #define MINBL 12
@@ -129,7 +128,7 @@ void app_main(void) {
 	int lastSecond = -1;
 	lv_display_t *display;
 	i2c_master_bus_init(); // second port for SCD30 todo make class
-	dummycp = server_root_cert_pem_start;
+//	dummycp = server_root_cert_pem_start;
 
 	gpio_set_direction(RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction(RS485TX_PIN, GPIO_MODE_OUTPUT);

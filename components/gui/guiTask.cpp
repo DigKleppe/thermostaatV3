@@ -56,8 +56,8 @@ TimerHandle_t screenTimer;
 
 const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
-								{"Softwareversie:","%s" , FIRMWARE_VERSION},
-								{"SPIFFSversie:","%s",SPIFFS_VERSION},
+								{"Softwareversie:","%s" ,&wifiSettings.firmwareVersion},  // last received version
+								{"SPIFFSversie:","%s",&wifiSettings.SPIFFSversion},
 								{"Temp. offset:", "%1.1f", &userSettings.temperatureOffset},
 								{"RH offset:", "%1.1f", &userSettings.RHoffset},
 								{"PID:", "%2.2f", &PIDsetting},

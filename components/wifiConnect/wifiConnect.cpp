@@ -127,7 +127,7 @@ TaskHandle_t connectTaskh;
 
 #ifdef USE_OTA
 wifiSettings_t wifiSettingsDefaults = {
-	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", FIRMWARE_VERSION, SPIFFS_VERSION, false};
+	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", "0.0", "0.0", false};
 TaskHandle_t updateTaskh;
 #else
 wifiSettings_t wifiSettingsDefaults = {
@@ -453,9 +453,7 @@ void connectTask(void *pvParameters) {
 	int updateTimer = 0; //  CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60;
 
 #endif
-
 	s_wifi_event_group = xEventGroupCreate();
-
 	esp_event_handler_instance_t instance_any_id;
 	esp_event_handler_instance_t instance_got_ip;
 	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &station_event_handler, NULL, &instance_any_id));
@@ -465,7 +463,7 @@ void connectTask(void *pvParameters) {
 		if (timeOutCounter > 0) {
 			timeOutCounter -= TASKINTERVAL;
 		}
-		//	ESP_LOGI(TAG, "step: %d", connectStep);
+	//SP_LOGI(TAG, "step: %d", connectStep);
 
 		if (connectRestart) {
 			connectRestart = false;
@@ -590,10 +588,9 @@ void connectTask(void *pvParameters) {
 				updateTimer--;
 				if ((updateTimer <= 0) || forceUpdate) {
 					updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
+					forceUpdate = false;
 					if (staticIPisSet) {
 						staticIPisSet = false;
-						//	updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
-						forceUpdate = false;
 						connectStep = 40;
 						connectStatus = CHECKFIRMWARE; // CONNECTING
 						esp_wifi_disconnect();
@@ -631,10 +628,14 @@ void connectTask(void *pvParameters) {
 				} while (!updateTaskHasFinished);
 
 				ESP_LOGI(TAG, "updateTask has finished");
-				enableFixedIP = true;
-				connectStep = 1;
-				esp_wifi_disconnect();
-				esp_wifi_connect();
+				if (advSettings.fixedIPdigit > 0) {  // start over connection with static ip 
+					enableFixedIP = true;
+					connectStep = 1;
+					esp_wifi_disconnect(); 
+					esp_wifi_connect();
+				}
+				else
+					connectStep = 22; // no need to reconnect
 				break;
 			case CONNECT_TIMEOUT:
 				s_retry_num = 0; // keep trying

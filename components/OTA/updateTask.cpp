@@ -167,9 +167,11 @@ void updateTask(void *pvParameter) {
 				vTaskDelay(100 / portTICK_PERIOD_MS);
 
 			if (updateStatus == UPDATE_RDY) {
-				ESP_LOGI(TAG, "SPIFFS flashed OK");
+				ESP_LOGI(TAG, "SPIFFS flashed OK, restarting system!");
 				strcpy(wifiSettings.SPIFFSversion, newVersion);
 				saveSettings();
+				vTaskDelay(100 / portTICK_PERIOD_MS);
+				esp_restart();
 			} else
 				ESP_LOGI(TAG, "Update SPIFFS failed!");
 		}
