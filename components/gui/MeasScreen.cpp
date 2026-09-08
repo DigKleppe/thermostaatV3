@@ -80,34 +80,30 @@ MeasScreen::MeasScreen() {
 	spinbox = new VerticalSpinbox(backGround, SPINBOXX, SPINBOXY, &spinBoxDescr);
 #endif
 	setpointLabel = lv_label_create(backGround);
-	setpointValueLabel = lv_label_create(backGround);
 	lv_obj_add_style(setpointLabel, &styleSetpoint, 0);
-	lv_obj_add_style(setpointValueLabel, &styleSetpointValue, 0);
-	lv_obj_set_size(setpointLabel, 300, 40);
 	lv_obj_set_pos(setpointLabel, 0, SETPOINTY); // -130
-	lv_obj_set_size(setpointValueLabel, 140, 40);
-	lv_obj_set_pos(setpointValueLabel, 300, SETPOINTY); // -130
 	setSetpointValue();
 }
 
 void MeasScreen::setSetpointValue(void) {
-	char str[30];
+	char str[40];
 	if (!userSettings.coolingOn && !userSettings.heatingOn) {
 		lv_label_set_text(setpointLabel, "Verwarming en koeling uit.");
-		lv_label_set_text(setpointValueLabel, "");
 	} else {
-		lv_label_set_text(setpointLabel, "Temperatuur ingesteld op");
-		sprintf(str, "%2.1f %s", userSettings.temperatureSetpoint, units[0]);
-		lv_label_set_text(setpointValueLabel, str);
+		if (!userSettings.coolingOn && userSettings.heatingOn)
+			strcpy(str, "Verwarming");
+		if (userSettings.coolingOn && !userSettings.heatingOn)
+			strcpy(str, "Koeling");
+		if (userSettings.coolingOn && userSettings.heatingOn)
+			strcpy(str, "Temperatuur");
+
+		sprintf(str + strlen(str), " ingesteld op %2.1f %s.", userSettings.temperatureSetpoint, units[0]);
+		lv_label_set_text(setpointLabel, str);
 	}
 }
 
 void MeasScreen::setDisplayText(int line, char *text) {
 	measDisplay[line]->setText(text);
-	// if (line == 0)
-	// 	printf ("\n\r %d: %s", line, text);
-	// else
-	// 	printf ("\t %d: %s", line, text);
 }
 
 void MeasScreen::setDisplayValue(int line, float value) { measDisplay[line]->setValue(value); }
@@ -115,11 +111,9 @@ void MeasScreen::setDisplayValue(int line, float value) { measDisplay[line]->set
 void MeasScreen::setStatusLine(const char *text) {
 	if (strlen(text) > 0) {
 		lv_obj_add_flag(setpointLabel, LV_OBJ_FLAG_HIDDEN);
-		lv_obj_add_flag(setpointValueLabel, LV_OBJ_FLAG_HIDDEN);
 		statusLine->setText(text);
 	} else {
 		lv_obj_clear_flag(setpointLabel, LV_OBJ_FLAG_HIDDEN);
-		lv_obj_clear_flag(setpointValueLabel, LV_OBJ_FLAG_HIDDEN);
 		statusLine->setText(NULL);
 	}
 }

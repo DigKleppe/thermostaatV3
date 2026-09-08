@@ -10,6 +10,7 @@
 #include "backGround.h"
 #include "fonts.h"
 #include "settings.h"
+#include "guiTask.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -60,6 +61,7 @@ void MainScreen::event_handler(lv_event_t *e) {
 		const char *state = lv_obj_get_state(obj) & LV_STATE_CHECKED ? "Checked" : "Unchecked";
 		LV_LOG_USER("%s: %s", txt, state);
 		settingsChanged = true;
+		resetScreenTimer();
 	}
 }
 

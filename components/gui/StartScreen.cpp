@@ -33,7 +33,6 @@ StartScreen::StartScreen(void) {
 	screen = lv_obj_create(NULL);
 	char str[80];
 
-
 	lv_obj_set_size(screen, LV_HOR_RES_MAX, LV_VER_RES_MAX);
 	lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 	lv_obj_set_pos(screen, 0, 0);
@@ -57,7 +56,8 @@ StartScreen::StartScreen(void) {
 	lv_obj_set_size(swVersionLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionLabel, &styleStartScreen, 0);
 	lv_obj_align_to(swVersionLabel, swVersionNameLabel, LV_ALIGN_TOP_RIGHT, 0, SPACING);
-	lv_label_set_text_fmt (swVersionLabel,(char *) &wifiSettings.firmwareVersion);
+	sprintf( str, "%s  %s", (char *) &wifiSettings.firmwareVersion, (char *) &wifiSettings.SPIFFSversion);
+	lv_label_set_text (swVersionLabel,str);
 
 	lv_obj_set_size(swVersionDateLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionDateLabel, &styleStartScreen, 0);

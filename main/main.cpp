@@ -122,7 +122,6 @@ void app_main(void) {
 	int minuteCntr = 0;
 	char str[30];
 	char str2[25];
-	int dummy;
 	time_t now = 0;
 	struct tm timeinfo;
 	int lastSecond = -1;
@@ -172,13 +171,13 @@ void app_main(void) {
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
 
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 2 * 1024, NULL, 2, &guiTaskh, 1);
+	xTaskCreatePinnedToCore(guiTask, "guiTask", 3 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
 	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
-	xTaskCreate(KNMItask, "KMNItask", 2 * 1024, NULL, 0, &KNMItaskh);
+	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
 
 	// while(1) {
 	// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;

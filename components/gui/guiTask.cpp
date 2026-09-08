@@ -8,10 +8,10 @@
  */
 
 #include "guiTask.h"
-#include "StartScreen.h"
 #include "InfoScreen.h"
 #include "MainScreen.h"
 #include "MeasScreen.h"
+#include "StartScreen.h"
 
 // extern "C" {      if ( timer++ == 200) {
 
@@ -23,8 +23,8 @@
 #include "styles.h"
 
 #include "settings.h"
-#include "wifiConnect.h"
 #include "softwareVersions.h"
+#include "wifiConnect.h"
 
 // extern MenuSetttingsDesrc_t DMMSettingsDescrTable[];
 
@@ -37,8 +37,7 @@ QueueHandle_t displayReadyMssgBox;
 MainScreen *mainScreen;
 MeasScreen *measScreen;
 InfoScreen *infoScreen;
-StartScreen * startScreen;
-
+StartScreen *startScreen;
 
 int screenIdx;
 extern float PIDsetting;
@@ -52,12 +51,10 @@ extern int rssi;
 
 TimerHandle_t screenTimer;
 
-
-
 const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"IPadres:", "%s", myIpAddress},
-								{"Softwareversie:","%s" ,&wifiSettings.firmwareVersion},  // last received version
-								{"SPIFFSversie:","%s",&wifiSettings.SPIFFSversion},
+								{"Softwareversie:", "%s", &wifiSettings.firmwareVersion}, // last received version
+								{"SPIFFSversie:", "%s", &wifiSettings.SPIFFSversion},
 								{"Temp. offset:", "%1.1f", &userSettings.temperatureOffset},
 								{"RH offset:", "%1.1f", &userSettings.RHoffset},
 								{"PID:", "%2.2f", &PIDsetting},
@@ -66,17 +63,15 @@ const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
-	xTimerStart(screenTimer,0);
+	xTimerStart(screenTimer, 0);
 	switch (idx) {
 	case 0:
 		startScreen->show();
-	
 		break;
-
 	case 1:
-		xTimerChangePeriod(screenTimer,SCREENTIME, 100);
+		xTimerChangePeriod(screenTimer, SCREENTIME, 100);
 		measScreen->show();
-		measScreen->setSetpointValue(); 
+		measScreen->setSetpointValue();
 		break;
 	case 2:
 		mainScreen->show();
@@ -90,13 +85,17 @@ void showScreen(int idx) {
 	}
 }
 
+void resetScreenTimer (void) {
+	xTimerStart(screenTimer, 0);
+}
+
 void screenTimerCallback(TimerHandle_t xTimer) {
 	screenIdx = 1;
 	showScreen(screenIdx);
 }
 
 void nextScreenClick(lv_event_t *e) { // from navigArrows
-	
+
 	if (screenIdx < (NRSCREENS - 1))
 		screenIdx++;
 	else
@@ -105,7 +104,7 @@ void nextScreenClick(lv_event_t *e) { // from navigArrows
 }
 
 void prevScreenClick(lv_event_t *e) { // from navigArrows
-	
+
 	if (screenIdx > 1)
 		screenIdx--;
 	else

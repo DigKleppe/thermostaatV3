@@ -98,7 +98,6 @@ private:
 	StatusIndicator *statusIndicator;
 	VerticalSpinbox *spinbox;
 	lv_obj_t *setpointLabel;
-	lv_obj_t *setpointValueLabel;
 
 public:
 	void setSetpointValue(void);

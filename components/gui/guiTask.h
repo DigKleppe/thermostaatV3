@@ -34,6 +34,7 @@ extern "C" {
 
 void guiTask(void *pvParameter);
 extern SemaphoreHandle_t xGuiSemaphore;
+void resetScreenTimer (void);
 
 }
 #endif /* COMPONENTS_GUI_GUITASK_H_ */
