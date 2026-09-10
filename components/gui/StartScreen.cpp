@@ -51,7 +51,7 @@ StartScreen::StartScreen(void) {
 	lv_obj_set_size(swVersionNameLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionNameLabel, &styleStartScreen, 0);
 	lv_obj_align_to(swVersionNameLabel, captionLabel, LV_ALIGN_TOP_RIGHT, 0, SPACING);
-	lv_label_set_text (swVersionNameLabel,"Softwareversie:");
+	lv_label_set_text (swVersionNameLabel,"Softwareversies:");
 
 	lv_obj_set_size(swVersionLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionLabel, &styleStartScreen, 0);

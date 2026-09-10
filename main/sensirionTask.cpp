@@ -6,7 +6,7 @@
  */
 
 // #define LOG_LOCAL_LEVEL ESP_LOG_NONE
-//#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
+// #define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -155,12 +155,13 @@ void sensirionTask(void *pvParameter) {
 	int lastminute = -1;
 	int co2autoCalTimer = CO2AUTOCALTIME;
 	int sensirionTimeoutTimer = 20;
+	int skipFirstReadings = 2;
 
 	displayMssg.displayItem = DISPLAY_ITEM_MEASLINE;
 	displayMssg.str2 = NULL;
 	ESP_LOGI(TAG, "Starting SCD30 task");
 
-	log_t* measLog = initLog();
+	log_t *measLog = initLog();
 	if (measLog == NULL) {
 		ESP_LOGE(TAG, "No memory for log!");
 	}
@@ -221,10 +222,15 @@ void sensirionTask(void *pvParameter) {
 			lastVal.co2 = airSensor.getCO2();
 			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
 			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
-			if (lastVal.co2 > 350) {						  // first measurement invalid, reject
-				co2Averager.write(lastVal.co2 * 1000.0);
-				tempAverager.write(lastVal.temperature * 1000.0);
-				humAverager.write(lastVal.hum * 1000.0);
+			if (skipFirstReadings == 0) { // firstReadings Co2 often wrong 
+				if (lastVal.co2 > 350) { // first measurement invalid, reject
+					co2Averager.write(lastVal.co2 * 1000.0);
+					tempAverager.write(lastVal.temperature * 1000.0);
+					humAverager.write(lastVal.hum * 1000.0);
+				}
+			} else {
+				skipFirstReadings--;
+				lastVal.co2 = 9999;
 			}
 
 			updatePID(lastVal.temperature - userSettings.temperatureOffset);
@@ -244,7 +250,7 @@ void sensirionTask(void *pvParameter) {
 					break;
 				case 2:
 					ESP_LOGI(TAG, "CO2 value: %f ", lastVal.co2);
-					if ((lastVal.co2 > 9999) || (lastVal.co2 < 350)) // error sensor
+					if ((lastVal.co2 >= 9999) || (lastVal.co2 < 350)) // error sensor
 						sprintf(displayStr[n], "----");
 					else
 						sprintf(displayStr[n], "%2.0f", lastVal.co2);
@@ -255,11 +261,10 @@ void sensirionTask(void *pvParameter) {
 
 				//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);
 			}
-
 #ifdef TURBO_MODE
 			addToLog(avgVal); // add to cyclic log buffer
 #else
-			if (lastminute != timeinfo.tm_min) {
+			if ((skipFirstReadings == 0) && (lastminute != timeinfo.tm_min)) {
 				avgVal.co2 = co2Averager.average() / 1000.0;
 				avgVal.temperature = tempAverager.average() / 1000.0;
 				avgVal.hum = humAverager.average() / 1000.0;
@@ -279,19 +284,18 @@ void sensirionTask(void *pvParameter) {
 					co2autoCalTimer = CO2AUTOCALTIME;
 			}
 #endif
-		}
-		if (calvaluesReceived) {
-			calvaluesReceived = false;
-			if (calValues.CO2 != NOCAL) { // then real CO2 received
-				airSensor.setForcedRecalibrationFactor(calValues.CO2);
-				if (!userSettings.isCalibrated) {
-					userSettings.isCalibrated = true;
-					saveSettings();
+			if (calvaluesReceived) {
+				calvaluesReceived = false;
+				if (calValues.CO2 != NOCAL) { // then real CO2 received
+					airSensor.setForcedRecalibrationFactor(calValues.CO2);
+					if (!userSettings.isCalibrated) {
+						userSettings.isCalibrated = true;
+						saveSettings();
+					}
+					calValues.CO2 = NOCAL;
 				}
-				calValues.CO2 = NOCAL;
 			}
 		}
-
 	} // end while(1)
 } // end sensirionTask
 
@@ -345,10 +349,10 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "RH offset", userSettings.RHoffset);
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PWM", PIDsetting);
 		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
-	#ifdef USE_OTA
+#ifdef USE_OTA
 		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", wifiSettings.firmwareVersion);
 		len += sprintf(pBuffer + len, "%s,%s\n", "SPIFFS versie", wifiSettings.SPIFFSversion);
-	#endif
+#endif
 		return len;
 		break;
 	case 2:
