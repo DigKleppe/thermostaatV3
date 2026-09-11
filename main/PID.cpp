@@ -15,7 +15,7 @@
 #define TAG "PID"
 
 #define MINIMUM_ON_TIME 120 // seconds
-#define HEATINGONLEVEL 0
+#define HEATINGONLEVEL 1
 
 float PIDsetting; // for cgi
 thermostatStatus_t thermostatStatus;
