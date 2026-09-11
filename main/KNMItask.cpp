@@ -164,11 +164,11 @@ void KNMItask(void *parameters) {
 		hpptActive = false; // sorry
 		if (buitenTemperatuur != -999.0) {
 			ESP_LOGI(TAG, "🌡️ Temperatuur in Wilhelminadorp: %.1f °C", buitenTemperatuur);
+			vTaskDelay(pdMS_TO_TICKS(5 * 60  * 1000));
 		} else {
 			ESP_LOGE(TAG, "❌ Kon temperatuur niet ophalen");
+			vTaskDelay(pdMS_TO_TICKS(10 * 1000));
 		}
-		// Wacht 5 minuten voor volgende meting
-		//	vTaskDelay(pdMS_TO_TICKS(5 * 60 * 60 * 1000));
-		vTaskDelay(pdMS_TO_TICKS(30 * 60 * 1000));
+			
 	}
 }
