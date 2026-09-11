@@ -171,7 +171,7 @@ void app_main(void) {
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
 
-	xTaskCreatePinnedToCore(guiTask, "guiTask", 3 * 1024, NULL, 2, &guiTaskh, 1);
+	xTaskCreatePinnedToCore(guiTask, "guiTask", 4 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);

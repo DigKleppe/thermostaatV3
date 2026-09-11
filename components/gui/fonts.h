@@ -20,6 +20,8 @@ extern const lv_font_t cantarel25;
 // extern const lv_font_t cantarelLight40;
 // extern const lv_font_t cantarelLite20;
 // extern const lv_font_t cantarelThin20;
+extern const lv_font_t lv_font_montserrat_14;
+extern const lv_font_t lv_font_montserrat_18;
 extern const lv_font_t lv_font_montserrat_44;
 extern const lv_font_t lv_font_montserrat_20;
 // extern const  lv_font_t awsome44;

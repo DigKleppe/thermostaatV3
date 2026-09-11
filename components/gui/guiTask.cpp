@@ -21,10 +21,11 @@
 #include "freertos/timers.h"
 
 #include "styles.h"
-
+#include "wifiConnect.h"
+#include "WifiSelectScreen.h"
 #include "settings.h"
 #include "softwareVersions.h"
-#include "wifiConnect.h"
+
 
 // extern MenuSetttingsDesrc_t DMMSettingsDescrTable[];
 
@@ -38,6 +39,7 @@ MainScreen *mainScreen;
 MeasScreen *measScreen;
 InfoScreen *infoScreen;
 StartScreen *startScreen;
+WifiSelectScreen *wifiSelectScreen;
 
 int screenIdx;
 extern float PIDsetting;
@@ -45,7 +47,7 @@ extern char myIpAddress[];
 extern uint32_t upTimeHrs;
 extern int rssi;
 
-#define NRSCREENS 4
+#define NRSCREENS 5
 
 #define SCREENTIME (15 * 1000 / portTICK_PERIOD_MS)
 
@@ -79,15 +81,16 @@ void showScreen(int idx) {
 	case 3:
 		infoScreen->show();
 		break;
+	case 4:
+		wifiSelectScreen->show();
+		break;
 
 	default:
 		break;
 	}
 }
 
-void resetScreenTimer (void) {
-	xTimerStart(screenTimer, 0);
-}
+void resetScreenTimer(void) { xTimerStart(screenTimer, 0); }
 
 void screenTimerCallback(TimerHandle_t xTimer) {
 	screenIdx = 1;
@@ -125,6 +128,7 @@ void guiTask(void *pvParameter) {
 	measScreen = new MeasScreen();
 	infoScreen = new InfoScreen(infoDesc);
 	startScreen = new StartScreen();
+	wifiSelectScreen = new WifiSelectScreen();
 
 	vTaskDelay(50 / portTICK_PERIOD_MS);
 	showScreen(0);

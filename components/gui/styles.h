@@ -29,6 +29,7 @@ extern lv_style_t styleSymbol;
 extern lv_style_t styleSetpoint;
 extern lv_style_t styleSetpointValue;
 extern lv_style_t styleStartScreen;
+extern lv_style_t styleWifiSettings;
 
 
 //  lv_palette_main(LV_PALETTE_GREY)
@@ -86,6 +87,10 @@ extern lv_style_t styleStartScreen;
 #define STARTSCREENCOLOR           DEFAULTBACKGROUNDCOLOR
 #define STARTSCREENTEXTCOLOR       lv_palette_main (LV_PALETTE_YELLOW)
 #define STARTSCREENFONT            thin50
+
+#define WIFISETTINGSFONT          lv_font_montserrat_20
+#define WIFISETTINGSVALUECOLOR    DEFAULTVALUECOLOR
+#define WIFISETTINGSBGCOLOR       DEFAULTBACKGROUNDCOLOR
 
 void initStyles (void);
 

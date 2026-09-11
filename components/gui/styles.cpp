@@ -24,6 +24,8 @@ lv_style_t styleSetpointValue;
 lv_style_t styleInfo;
 lv_style_t styleSymbol;
 
+lv_style_t styleWifiSettings;
+
 lv_style_t styleStartScreen;
 
 void initStyles ( void){
@@ -106,6 +108,12 @@ void initStyles ( void){
 	lv_style_set_text_font(&styleStartScreen, &STARTSCREENFONT);
 	lv_style_set_text_color(&styleStartScreen, STARTSCREENTEXTCOLOR);
 	lv_style_set_bg_color(&styleStartScreen, STARTSCREENCOLOR);
+
+	lv_style_init(&styleWifiSettings);
+	lv_style_set_text_font(&styleWifiSettings, &WIFISETTINGSFONT);
+	lv_style_set_text_color(&styleWifiSettings, WIFISETTINGSVALUECOLOR);
+	lv_style_set_bg_color(&styleWifiSettings, WIFISETTINGSBGCOLOR);
+
 
 //	lv_style_set_radius(&styleClock, 5);
 //	lv_style_set_bg_opa(&styleClock, LV_OPA_COVER);

@@ -84,6 +84,8 @@ handles wifi connect process
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WAPI_PSK
 #endif
 
+#define MAX_AP 20 // scan
+
 #ifdef CONFIG_WPS_ENABLED
 #ifndef PIN2STR
 #define PIN2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5], (a)[6], (a)[7]
@@ -99,6 +101,10 @@ void initialiseMdns(char *hostName);
 esp_err_t start_file_server(const char *base_path);
 extern const tCGI CGIurls[];
 extern int resetCause;
+
+// scan
+wifi_ap_record_t ap_records[MAX_AP];
+uint16_t ap_count;
 
 char myIpAddress[16];
 bool DHCPoff;
@@ -126,8 +132,8 @@ wifiSettings_t wifiSettings;
 TaskHandle_t connectTaskh;
 
 #ifdef USE_OTA
-wifiSettings_t wifiSettingsDefaults = {
-	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", "0.0", "0.0", false};
+wifiSettings_t wifiSettingsDefaults = {ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", "0.0",
+									   "0.0",		  false};
 TaskHandle_t updateTaskh;
 #else
 wifiSettings_t wifiSettingsDefaults = {
@@ -150,6 +156,17 @@ static EventGroupHandle_t s_wifi_event_group;
 #define CONNECTED_BIT BIT0
 static const int ESPTOUCH_DONE_BIT = BIT2;
 static const char *TAG = "wifiConnect";
+
+void perform_wifi_scan(void) {
+	wifi_scan_config_t scan_config = {.ssid = NULL, .bssid = NULL, .channel = 0, .show_hidden = false};
+
+	ESP_LOGI(TAG, "Start WiFi scan...");
+	ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
+
+	ap_count = MAX_AP;
+	ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_records));
+	ESP_LOGI(TAG, "Aantal gevonden AP's: %d", ap_count);
+}
 
 int getRssi(void) {
 	wifi_ap_record_t ap_info;
@@ -246,6 +263,12 @@ static void station_event_handler(void *arg, esp_event_base_t event_base, int32_
 			break;
 		case WIFI_EVENT_STA_DISCONNECTED:
 			disconnects++;
+
+			while (ap_count == 0) {
+				perform_wifi_scan();
+				vTaskDelay(1000 / portTICK_PERIOD_MS);
+			}
+
 			ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
 			if (connectStatus != WPS_ACTIVE) {
 
@@ -374,6 +397,8 @@ void wifi_init_sta(void) {
 	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_LOGI(TAG, "wifi_init_sta finished.");
+	//	vTaskDelay( 2000/portTICK_PERIOD_MS);
+	//	perform_wifi_scan();
 }
 #ifdef USE_EMAIL
 void sendLogInMssg(void) {
@@ -463,7 +488,7 @@ void connectTask(void *pvParameters) {
 		if (timeOutCounter > 0) {
 			timeOutCounter -= TASKINTERVAL;
 		}
-	//SP_LOGI(TAG, "step: %d", connectStep);
+		// SP_LOGI(TAG, "step: %d", connectStep);
 
 		if (connectRestart) {
 			connectRestart = false;
@@ -489,6 +514,10 @@ void connectTask(void *pvParameters) {
 			case CONNECTED:
 			case IP_RECEIVED:
 				connectStep = 20;
+				while (ap_count == 0) {
+					perform_wifi_scan();
+					vTaskDelay(1000 / portTICK_PERIOD_MS);
+				}
 				break;
 			case CONNECT_TIMEOUT:
 #ifdef CONFIG_WPS_ENABLED
@@ -628,13 +657,12 @@ void connectTask(void *pvParameters) {
 				} while (!updateTaskHasFinished);
 
 				ESP_LOGI(TAG, "updateTask has finished");
-				if (advSettings.fixedIPdigit > 0) {  // start over connection with static ip 
+				if (advSettings.fixedIPdigit > 0) { // start over connection with static ip
 					enableFixedIP = true;
 					connectStep = 1;
-					esp_wifi_disconnect(); 
+					esp_wifi_disconnect();
 					esp_wifi_connect();
-				}
-				else
+				} else
 					connectStep = 22; // no need to reconnect
 				break;
 			case CONNECT_TIMEOUT:

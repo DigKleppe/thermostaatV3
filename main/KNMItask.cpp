@@ -152,7 +152,7 @@ void KNMItask(void *parameters) {
 	while (1) {
 		//	if (xSemaphoreTake(hpptReqSemphore, portMAX_DELAY) == pdTRUE) { // shared with updateTask
 		do {
-			ESP_LOGI(TAG, "wait semaphore ");
+		//	ESP_LOGI(TAG, "wait semaphore ");
 			vTaskDelay(1000 / portMAX_DELAY);
 		} while (hpptActive);
 

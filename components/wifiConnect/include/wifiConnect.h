@@ -44,6 +44,7 @@ extern wifiSettings_t wifiSettings;
 extern wifiSettings_t wifiSettingsDefaults;
 extern char myIpAddress[];
 extern uint8_t lastIpDigit;
+extern bool wpsOff;
 
 #define STATIC_NETMASK_ADDR "255.255.255.0"
 #define DEFAULT_IPADDRESS "192.168.2.50"
@@ -72,7 +73,10 @@ typedef enum {
 extern volatile connectStatus_t connectStatus;
 extern uint32_t connectRetries;
 extern uint32_t disconnects;
-
+// scan 
+#define MAX_AP 20
+extern wifi_ap_record_t ap_records[MAX_AP];
+extern uint16_t ap_count;
 
 #ifdef USE_OTA
 	extern TaskHandle_t updateTaskh;
@@ -82,6 +86,7 @@ extern TaskHandle_t connectTaskh;
 
 void wifiConnect(void);
 void restartWifi(void);
+void perform_wifi_scan(void);
 
 #if !CONFIG_IDF_TARGET_LINUX
 #if CONFIG_EXAMPLE_CONNECT_WIFI
