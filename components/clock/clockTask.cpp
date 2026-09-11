@@ -15,6 +15,7 @@
 #include "lwip/ip_addr.h"
 
 #include "KNMItask.h"
+#include "wifiConnect.h"
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
@@ -56,6 +57,10 @@ void clockTask(void *pvParameter) {
 
 	setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
 	tzset();
+	while( connectStatus != CONNECT_READY) {
+		vTaskDelay( 1000/portTICK_PERIOD_MS);
+	}
+	
 
 	initialize_sntp();
 

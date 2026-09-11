@@ -514,15 +514,15 @@ void connectTask(void *pvParameters) {
 			case CONNECTED:
 			case IP_RECEIVED:
 				connectStep = 20;
-				while (ap_count == 0) {
-					perform_wifi_scan();
-					vTaskDelay(1000 / portTICK_PERIOD_MS);
-				}
 				break;
 			case CONNECT_TIMEOUT:
 #ifdef CONFIG_WPS_ENABLED
 				// if (esp_reset_reason() == ESP_RST_SW) // no wps if rebooted from checksystemtask
 				// 	wpsOff = true;
+				while (ap_count == 0) {
+					perform_wifi_scan();
+					vTaskDelay(1000 / portTICK_PERIOD_MS);
+				}
 
 				if (!wpsOff) {
 					connectStep++;
@@ -592,6 +592,11 @@ void connectTask(void *pvParameters) {
 			case IP_RECEIVED:
 				if (!DNSoff)
 					initialiseMdns(userSettings.moduleName);
+				while (ap_count == 0) {
+					perform_wifi_scan();
+					vTaskDelay(1000 / portTICK_PERIOD_MS);
+				}
+
 				connectStep++;
 				delay = 100; // = 1 sec
 				break;
@@ -655,6 +660,10 @@ void connectTask(void *pvParameters) {
 				do {
 					vTaskDelay(100 / portTICK_PERIOD_MS);
 				} while (!updateTaskHasFinished);
+				if (updateTaskError) {
+					updateTimer = 60 * 60 * 10; // retry after 1 hour
+					ESP_LOGI(TAG, "updateTask failed");
+				}
 
 				ESP_LOGI(TAG, "updateTask has finished");
 				if (advSettings.fixedIPdigit > 0) { // start over connection with static ip
@@ -719,7 +728,7 @@ void wifiConnect(void) {
 		strcpy((char *)wifiSettings.pwd, wifiSettingsDefaults.pwd);
 		saveSettings();
 	}
-	xTaskCreate(connectTask, "connectTask", 1024 * 3, NULL, 5, &connectTaskh);
+	xTaskCreate(connectTask, "connectTask", 1024 * 5, NULL, 5, &connectTaskh);
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
 void restartWifi(void) { connectRestart = true; }

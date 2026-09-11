@@ -33,6 +33,7 @@ volatile updateStatus_t updateStatus;
 // volatile bool getNewVersionTaskFinished;
 volatile bool forceUpdate;
 volatile bool updateTaskHasFinished;
+volatile bool updateTaskError;
 
 // extern SemaphoreHandle_t hpptReqSemphore;
 extern volatile bool hpptActive;
@@ -76,6 +77,7 @@ void updateTask(void *pvParameter) {
 
 	ESP_LOGI(TAG, "Running");
 	updateTaskHasFinished = false;
+	updateTaskError = false;
 
 	if ((strcmp(wifiSettings.upgradeFileName, CONFIG_FIRMWARE_UPGRADE_FILENAME) != 0) ||
 		(strcmp(wifiSettings.upgradeURL, CONFIG_DEFAULT_FIRMWARE_UPGRADE_URL) != 0)) {
@@ -184,6 +186,8 @@ void updateTask(void *pvParameter) {
 
 	hpptActive = false; // sorry
 	updateTaskh = NULL;
+	if( error)
+		updateTaskError = true;
 	vTaskDelete(NULL);
 }
 #endif

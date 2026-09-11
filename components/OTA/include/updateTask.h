@@ -18,6 +18,7 @@ esp_err_t getNewVersion (char * infoFileName , char * newVersion);
 void updateTask(void *pvParameter);
 extern volatile bool forceUpdate;
 extern volatile bool updateTaskHasFinished;
+extern volatile bool updateTaskError;
 
 
 extern TaskHandle_t updateFWTaskh;

@@ -238,26 +238,26 @@ void app_main(void) {
 		if (displayMssgBox)
 			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 
-		// if (presc-- <= 0) {
-		// 	presc = 20;
-		// 	ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
-		// 	ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
-		// 	ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-		// 	ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
-		// 	ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
-		// 	ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
-		// 	ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
-		// 	ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
-		// 	ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
-		// 	if (updateTaskh != NULL) {
-		// 		ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
-		// 		if (updateFWTaskh != NULL)
-		// 			ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
+		if (presc-- <= 0) {
+			presc = 20;
+			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
+			ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
+			ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
+			ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
+			ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
+			ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
+			ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
+			ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+			if (updateTaskh != NULL) {
+				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
+				if (updateFWTaskh != NULL)
+					ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
 
-		// 		if (updateSPIFFSTaskh != NULL)
-		// 			ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
-		// 	}
-		// }
+				if (updateSPIFFSTaskh != NULL)
+					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
+			}
+		}
 
 
 		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
