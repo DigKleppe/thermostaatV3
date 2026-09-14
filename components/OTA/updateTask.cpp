@@ -127,7 +127,7 @@ void updateTask(void *pvParameter) {
 
 		if (doUpdate) {
 			ESP_LOGI(TAG, "Updating firmware to version: %s", newVersion);
-			xTaskCreate(&updateFirmwareTask, "updateFirmwareTask", 2 * 8192, NULL, 5, &updateFWTaskh);
+			xTaskCreate(&updateFirmwareTask, "updateFirmwareTask", 4 * 1024, NULL, 5, &updateFWTaskh);
 			vTaskDelay(100 / portTICK_PERIOD_MS);
 			while (updateStatus == UPDATE_BUSY)
 				vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -146,7 +146,7 @@ void updateTask(void *pvParameter) {
 		}
 
 		// ********************* SPIFFS update ***************************
-
+		newVersion[0] = 0;
 		doUpdate = false;
 		getNewVersion(SPIFFS_INFO_FILENAME, newVersion);
 		if (newVersion[0] != 0) {
@@ -162,7 +162,7 @@ void updateTask(void *pvParameter) {
 
 		if (doUpdate) {
 			ESP_LOGI(TAG, "Updating SPIFFS to version: %s", newVersion);
-			xTaskCreate(&updateSpiffsTask, "updateSpiffsTask", 2 * 8192, NULL, 5, &updateSPIFFSTaskh);
+			xTaskCreate(&updateSpiffsTask, "updateSpiffsTask", 4 * 1024, NULL, 5, &updateSPIFFSTaskh);
 			vTaskDelay(100 / portTICK_PERIOD_MS);
 
 			while (updateStatus == UPDATE_BUSY) // wait for task to finish

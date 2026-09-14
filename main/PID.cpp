@@ -119,7 +119,7 @@ void setPWM(int perc) {
 		lastPerc = perc;
 
 		offTimer--;
-		if (offTimer == 0) {
+		if (offTimer <= 0) {
 			state = 1;
 			onTimer = MINIMUM_ON_TIME / MEASINTERVAL;
 			break;

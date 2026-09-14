@@ -36,6 +36,9 @@ StartScreen::StartScreen(void) {
 	lv_obj_set_size(screen, LV_HOR_RES_MAX, LV_VER_RES_MAX);
 	lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 	lv_obj_set_pos(screen, 0, 0);
+	lv_obj_clean(lv_scr_act());
+	vTaskDelay(100/portTICK_PERIOD_MS);
+
 	lv_obj_add_style(screen, &styleStartScreen, 0);
 
 	captionLabel = lv_label_create(screen);

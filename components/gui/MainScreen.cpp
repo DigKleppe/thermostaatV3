@@ -9,13 +9,13 @@
 #include "MainScreen.h"
 #include "backGround.h"
 #include "fonts.h"
-#include "settings.h"
 #include "guiTask.h"
+#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-//#define PADDING 30
+// #define PADDING 30
 #define ITEMHEIGHT 95
 #define ITEMWIDTH 300
 
@@ -49,9 +49,8 @@ const SpinBoxDescr_t settingsScreenDescr[] = {{
 												  .var = NULL,
 											  }};
 
-
-
 void MainScreen::event_handler(lv_event_t *e) {
+	char str[20];
 	lv_event_code_t code = lv_event_get_code(e);
 	lv_obj_t *obj = lv_event_get_target(e);
 	bool *p = (bool *)obj->user_data;
@@ -60,11 +59,23 @@ void MainScreen::event_handler(lv_event_t *e) {
 		*p = (lv_obj_get_state(obj) & LV_STATE_CHECKED);
 		const char *state = lv_obj_get_state(obj) & LV_STATE_CHECKED ? "Checked" : "Unchecked";
 		LV_LOG_USER("%s: %s", txt, state);
+		//	if (obj == cb[CBHEATING]) {
+		if ((void *)obj->user_data == (void *)&userSettings.heatingOn) {
+			if (lv_obj_get_state(obj) & LV_STATE_CHECKED)
+				lv_checkbox_set_text(obj, "Verwarming aan");
+			else
+				lv_checkbox_set_text(obj, "Verwarming uit");
+		} else {
+			if (lv_obj_get_state(obj) & LV_STATE_CHECKED)
+				lv_checkbox_set_text(obj, "Koeling aan");
+			else
+				lv_checkbox_set_text(obj, "Koeling uit");
+		}
 		settingsChanged = true;
+
 		resetScreenTimer();
 	}
 }
-
 
 MainScreen::MainScreen() {
 	screen = lv_obj_create(NULL);
@@ -87,7 +98,7 @@ MainScreen::MainScreen() {
 	for (int n = 0; n < NR_CHECKBOXES; n++) {
 		cb[n] = lv_checkbox_create(screen);
 
-		//lv_obj_set_size(cb[n], 400, 40);
+		// lv_obj_set_size(cb[n], 400, 40);
 		lv_checkbox_set_text(cb[n], cbText[n]);
 		lv_obj_add_event_cb(cb[n], event_handler, LV_EVENT_ALL, NULL);
 		lv_obj_add_style(cb[n], &styleSpinButtonName, 0);
@@ -106,14 +117,13 @@ MainScreen::MainScreen() {
 
 		lv_coord_t h = lv_obj_get_height(cb[n]);
 
-		// lv_obj_set_pos(cb[n], 30, n * (h + PADDING) + 275);  // 
-		lv_obj_set_pos(cb[n],30 +  n * 240 , 320);  // 
+		// lv_obj_set_pos(cb[n], 30, n * (h + PADDING) + 275);  //
+		lv_obj_set_pos(cb[n], 5 + n * 270, 320); //
 	}
 	navigArrows = new NavigArrows(backGround, true, true);
 
 	update();
 }
-
 
 void MainScreen::update(void) {
 
@@ -126,15 +136,21 @@ void MainScreen::update(void) {
 		n++;
 	} while (n < NR_SPINBOXES);
 
-	if (userSettings.heatingOn)
+	if (userSettings.heatingOn) {
 		lv_obj_add_state(cb[CBHEATING], LV_STATE_CHECKED);
-	else
+		lv_checkbox_set_text(cb[CBHEATING], "Verwarming aan");
+	} else {
 		lv_obj_clear_state(cb[CBHEATING], LV_STATE_CHECKED);
+		lv_checkbox_set_text(cb[CBHEATING], "Verwarming uit");
+	}
 
-	if (userSettings.coolingOn)
+	if (userSettings.coolingOn) {
 		lv_obj_add_state(cb[CBCOOLING], LV_STATE_CHECKED);
-	else
+		lv_checkbox_set_text(cb[CBCOOLING], "Koeling aan");
+	} else {
 		lv_obj_clear_state(cb[CBCOOLING], LV_STATE_CHECKED);
+		lv_checkbox_set_text(cb[CBCOOLING], "Koeling uit");
+	}
 }
 
 void MainScreen::show() {

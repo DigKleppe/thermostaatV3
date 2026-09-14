@@ -47,7 +47,7 @@ public:
 
 private:
 	char  measValue1[MAXVALUECHARS+3]; // extra space for a symbol (3 characters)
-	static void event_handler(lv_obj_t * obj, lv_event_t event);
+	void event_handler(lv_obj_t * obj, lv_event_t event);
 	static void screenClicked(lv_event_t * event);
 	lv_obj_t * backGround;
 	MeasDisplay * measDisplay;

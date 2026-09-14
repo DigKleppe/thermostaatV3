@@ -39,6 +39,7 @@ static char ssid_options[1024]; /* buffer voor dropdown opties */
  * ============================================================ */
 void WifiSelectScreen::kb_event_cb(lv_event_t *e) {
 	resetScreenTimer();
+	wpsOff = true;
 	lv_event_code_t code = lv_event_get_code(e);
 	if (code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
 		lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
@@ -67,20 +68,17 @@ void WifiSelectScreen::btn_connect_event_cb(lv_event_t *e) {
 
 	/* Lees wachtwoord uit textarea */
 	const char *pwd = lv_textarea_get_text(ta_password);
-	if (pwd)
-		strncpy(password, pwd, sizeof(password) - 1);
-
-	if (strlen(ssid) == 0) {
-		lv_label_set_text(label_status, "Kies een netwerk");
-		return;
+	if (pwd) {
+		if ((strlen(pwd) >= 8) && (strlen(ssid) > 0)) {
+			strncpy(password, pwd, sizeof(password) - 1);
+			strcpy(wifiSettings.SSID, ssid);
+			strcpy(wifiSettings.pwd, password);
+			saveSettings();
+			lv_label_set_text(label_status, "Verbinden...");
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			restartWifi();
+		}
 	}
-
-	lv_label_set_text(label_status, "Verbinden...");
-	strcpy(wifiSettings.SSID, ssid);
-	strcpy(wifiSettings.pwd, password);
-	saveSettings();
-	vTaskDelay(100 / portTICK_PERIOD_MS);
-	restartWifi();
 }
 
 void WifiSelectScreen::btn_scan_event_cb(lv_event_t *e) {
@@ -92,12 +90,16 @@ void WifiSelectScreen::btn_scan_event_cb(lv_event_t *e) {
 
 void WifiSelectScreen::update() {
 	/* Bouw de optiestring voor de dropdown */
+	int idx = 0;
 	ssid_options[0] = '\0';
 
 	for (int i = 0; i < ap_count; i++) {
 		if (i > 0)
 			strcat(ssid_options, "\n");
 		strcat(ssid_options, (char *)ap_records[i].ssid);
+		if ( strcmp ((char *) ap_records[i].ssid , (char *) wifiSettings.SSID ) == 0)	
+			idx = i;
+
 	}
 
 	if (ap_count == 0) {
@@ -105,7 +107,7 @@ void WifiSelectScreen::update() {
 	}
 
 	lv_dropdown_set_options(dd_ssid, ssid_options);
-	lv_dropdown_set_selected(dd_ssid, 0);
+	lv_dropdown_set_selected(dd_ssid, idx);
 }
 
 /* ============================================================
@@ -180,9 +182,8 @@ WifiSelectScreen::WifiSelectScreen() {
 	navigArrows = new NavigArrows(backGround, true, true);
 }
 void WifiSelectScreen::show() {
-	wpsOff = true;
+
 	lv_scr_load(screen);
-//	perform_wifi_scan();
 	update();
 }
 WifiSelectScreen::~WifiSelectScreen() {
