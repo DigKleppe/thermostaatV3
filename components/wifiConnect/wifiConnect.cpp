@@ -490,7 +490,7 @@ void connectTask(void *pvParameters) {
 		if (timeOutCounter > 0) {
 			timeOutCounter -= TASKINTERVAL;
 		}
-		// SP_LOGI(TAG, "step: %d", connectStep);
+	//	ESP_LOGI(TAG, "step: %d", connectStep);
 
 		if (connectRestart) {
 			connectRestart = false;
@@ -508,14 +508,17 @@ void connectTask(void *pvParameters) {
 		case 0:
 			ESP_LOGI(TAG, "Connecting to: %s pw:%s", wifiSettings.SSID, wifiSettings.pwd);
 			wifi_init_sta();
-			start_file_server("/spiffs");
+		//	start_file_server("/spiffs");
 			connectStep++;
 			break;
 		case 1:
 			switch (connectStatus) {
 			case CONNECTED:
+				connectStep = 20;
+				break;
 			case IP_RECEIVED:
 				connectStep = 20;
+				start_file_server("/spiffs");
 				break;
 			case CONNECT_TIMEOUT:
 #ifdef CONFIG_WPS_ENABLED
@@ -532,7 +535,7 @@ void connectTask(void *pvParameters) {
 					connectStatus = WPS_ACTIVE;
 					ESP_LOGI(TAG, "WPS Active");
 					ESP_ERROR_CHECK(esp_wifi_wps_enable(&wpsConfig));
-					ESP_ERROR_CHECK(esp_wifi_wps_start(1000 * 2 * 60));
+					ESP_ERROR_CHECK(esp_wifi_wps_start(0));
 					wpsActive = true;
 					timeOutCounter = (WPS_TIMEOUTTIME * 1000);
 				} else {

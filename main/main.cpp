@@ -164,13 +164,17 @@ void app_main(void) {
 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 
-	strcpy( wifiSettings.SSID , ( char *) "Klepnet2");
-	strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
-
-	// strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
+	// strcpy( wifiSettings.SSID , ( char *) "Klepnet2");
+	// strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
+	
+	//strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
 	// strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
 
-#warning "fixed SSID"
+	//strcpy( wifiSettings.firmwareVersion , ( char *) "12.34!");
+
+//#warning "wifiSettings.firmwareVersion"
+
+//#warning "fixed SSID"
 
 
 	wifiConnect();
@@ -250,14 +254,14 @@ void app_main(void) {
 		if (presc-- <= 0) {
 			presc = 20;
 			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
-			ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
-			ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-			ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
-			ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
-			ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
-			ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
-			ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
-			ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
+			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
+			// ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
+			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
+			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
+			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
+			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
 			
 			#ifdef USE_OTA
 			if (updateTaskh != NULL) {

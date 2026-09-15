@@ -15,8 +15,8 @@
 #include "freertos/task.h"
 #include "sdkconfig.h"
 
-//#define USE_OTA
-#define NOSCAN
+#define USE_OTA
+//#define NOSCAN
 
 #ifdef __cplusplus
 extern "C" {
