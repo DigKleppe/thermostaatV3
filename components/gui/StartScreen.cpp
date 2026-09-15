@@ -59,7 +59,11 @@ StartScreen::StartScreen(void) {
 	lv_obj_set_size(swVersionLabel, LABELWIDTH, LABELHEIGTH);
 	lv_obj_add_style(swVersionLabel, &styleStartScreen, 0);
 	lv_obj_align_to(swVersionLabel, swVersionNameLabel, LV_ALIGN_TOP_RIGHT, 0, SPACING);
+	#ifdef USE_OTA
 	sprintf( str, "%s  %s", (char *) &wifiSettings.firmwareVersion, (char *) &wifiSettings.SPIFFSversion);
+	#else
+	sprintf( str, "%s ", (char *) "test 0.0");
+	#endif
 	lv_label_set_text (swVersionLabel,str);
 
 	lv_obj_set_size(swVersionDateLabel, LABELWIDTH, LABELHEIGTH);

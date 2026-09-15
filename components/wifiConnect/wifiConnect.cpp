@@ -113,6 +113,7 @@ bool DNSoff;
 bool fileServerOff;
 bool wpsOff;
 bool doStop;
+volatile bool forceUpdate;
 volatile bool staticIPisSet;
 bool enableFixedIP;
 
@@ -156,7 +157,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define CONNECTED_BIT BIT0
 static const int ESPTOUCH_DONE_BIT = BIT2;
 static const char *TAG = "wifiConnect";
-
+#ifndef NOSCAN
 void perform_wifi_scan(void) {
 	wifi_scan_config_t scan_config = {.ssid = NULL, .bssid = NULL, .channel = 0, .show_hidden = false};
 
@@ -167,6 +168,7 @@ void perform_wifi_scan(void) {
 	ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_records));
 	ESP_LOGI(TAG, "Aantal gevonden AP's: %d", ap_count);
 }
+#endif
 
 int getRssi(void) {
 	wifi_ap_record_t ap_info;
@@ -263,12 +265,12 @@ static void station_event_handler(void *arg, esp_event_base_t event_base, int32_
 			break;
 		case WIFI_EVENT_STA_DISCONNECTED:
 			disconnects++;
-
+#ifndef NOSCAN
 			while (ap_count == 0) {
 				perform_wifi_scan();
 				vTaskDelay(1000 / portTICK_PERIOD_MS);
 			}
-
+#endif
 			ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
 			if (connectStatus != WPS_ACTIVE) {
 
@@ -519,17 +521,18 @@ void connectTask(void *pvParameters) {
 #ifdef CONFIG_WPS_ENABLED
 				// if (esp_reset_reason() == ESP_RST_SW) // no wps if rebooted from checksystemtask
 				// 	wpsOff = true;
+			#ifndef NOSCAN	
 				while (ap_count == 0) {
 					perform_wifi_scan();
 					vTaskDelay(1000 / portTICK_PERIOD_MS);
 				}
-
+			#endif	
 				if (!wpsOff) {
 					connectStep++;
 					connectStatus = WPS_ACTIVE;
 					ESP_LOGI(TAG, "WPS Active");
 					ESP_ERROR_CHECK(esp_wifi_wps_enable(&wpsConfig));
-					ESP_ERROR_CHECK(esp_wifi_wps_start());
+					ESP_ERROR_CHECK(esp_wifi_wps_start(1000 * 2 * 60));
 					wpsActive = true;
 					timeOutCounter = (WPS_TIMEOUTTIME * 1000);
 				} else {
@@ -592,11 +595,12 @@ void connectTask(void *pvParameters) {
 			case IP_RECEIVED:
 				if (!DNSoff)
 					initialiseMdns(userSettings.moduleName);
+				#ifndef NOSCAN	
 				while (ap_count == 0) {
 					perform_wifi_scan();
 					vTaskDelay(1000 / portTICK_PERIOD_MS);
 				}
-
+				#endif
 				connectStep++;
 				delay = 100; // = 1 sec
 				break;

@@ -16,6 +16,7 @@
 #include "sdkconfig.h"
 
 #define USE_OTA
+#define NOSCAN
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,7 +87,10 @@ extern TaskHandle_t connectTaskh;
 
 void wifiConnect(void);
 void restartWifi(void);
+#ifndef NOSCAN
 void perform_wifi_scan(void);
+#endif
+
 
 #if !CONFIG_IDF_TARGET_LINUX
 #if CONFIG_EXAMPLE_CONNECT_WIFI

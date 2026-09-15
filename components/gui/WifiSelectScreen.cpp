@@ -82,10 +82,10 @@ void WifiSelectScreen::btn_connect_event_cb(lv_event_t *e) {
 }
 
 void WifiSelectScreen::btn_scan_event_cb(lv_event_t *e) {
-	lv_label_set_text(label_status, "Scannen...");
-	perform_wifi_scan();
-	lv_label_set_text(label_status, "Scan voltooid");
-	resetScreenTimer();
+	// lv_label_set_text(label_status, "Scannen...");
+	// perform_wifi_scan();
+	// lv_label_set_text(label_status, "Scan voltooid");
+	// resetScreenTimer();
 }
 
 void WifiSelectScreen::update() {

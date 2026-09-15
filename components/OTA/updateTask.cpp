@@ -31,7 +31,7 @@ static const char *TAG = "updateTask";
 
 volatile updateStatus_t updateStatus;
 // volatile bool getNewVersionTaskFinished;
-volatile bool forceUpdate;
+
 volatile bool updateTaskHasFinished;
 volatile bool updateTaskError;
 

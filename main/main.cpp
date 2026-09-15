@@ -164,6 +164,15 @@ void app_main(void) {
 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 
+	strcpy( wifiSettings.SSID , ( char *) "Klepnet2");
+	strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
+
+	// strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
+	// strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
+
+#warning "fixed SSID"
+
+
 	wifiConnect();
 
 	board_i2c_recover();
@@ -249,6 +258,8 @@ void app_main(void) {
 			ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
 			ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
 			ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+			
+			#ifdef USE_OTA
 			if (updateTaskh != NULL) {
 				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
 				if (updateFWTaskh != NULL)
@@ -257,6 +268,7 @@ void app_main(void) {
 				if (updateSPIFFSTaskh != NULL)
 					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
 			}
+			#endif
 		}
 
 
