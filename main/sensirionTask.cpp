@@ -174,16 +174,14 @@ void sensirionTask(void *pvParameter) {
 	tempAverager.setAverages(AVERAGES);
 	humAverager.setAverages(AVERAGES);
 
-
-	while (airSensor.begin(I2CbusHandle, false, true) != ESP_OK)  {
+	while (airSensor.begin(I2CbusHandle, false, true) != ESP_OK) {
 		ESP_LOGE(TAG, "Air sensor not detected");
-		if( sensirionTimeoutTimer > 0 ) 
+		if (sensirionTimeoutTimer > 0)
 			sensirionTimeoutTimer--;
 		else
 			sensirionError = true;
 		vTaskDelay(2000 / portTICK_PERIOD_MS);
 	}
-
 
 	if (airSensor.setMeasurementInterval(20) != ESP_OK)
 		ESP_LOGE(TAG, "Error setMeasurementInterval");
@@ -196,34 +194,38 @@ void sensirionTask(void *pvParameter) {
 	xTaskCreate(updTransmitTask, "udptx", 4 * 1024, NULL, 0, NULL);
 	// testLog();
 	while (1) {
-		// vTaskDelay(10 / portTICK_PERIOD_MS);
 		vTaskDelay(2 / portTICK_PERIOD_MS);
 
 		time(&now);
 		localtime_r(&now, &timeinfo);
 
 		if (sensirionError)
-			sensirionTimeoutTimer = 1; //
+			sensirionTimeoutTimer = 0; //
 		if (sensirionTimeoutTimer-- == 0) {
 			ESP_LOGE(TAG, "Air sensor timeout");
 			resets++;
 			airSensor.reset();
 			if (initSCD30() != ESP_OK)
 				sensirionError = true;
-			else
+			else {
 				sensirionError = false;
+				sensirionTimeoutTimer = SCD30_TIMEOUT;
 
-			sensirionTimeoutTimer = SCD30_TIMEOUT;
-			while ((airSensor.begin(I2CbusHandle, false, false) != ESP_OK) && (sensirionTimeoutTimer-- > 0))
-				vTaskDelay(200 / portTICK_PERIOD_MS);
+				if (airSensor.begin(I2CbusHandle, false, false) != ESP_OK) {
+					ESP_LOGE(TAG, "Air sensor begin failed");
+					sensirionError = true;
+				} else
+					ESP_LOGI(TAG, "Air sensor begin ok");
+			}
 		}
-		if (airSensor.readMeasurement() == ESP_OK) {
+
+		if (!sensirionError && (airSensor.readMeasurement() == ESP_OK)) {
 			sensirionTimeoutTimer = SCD30_TIMEOUT;
 			lastVal.co2 = airSensor.getCO2();
 			lastVal.temperature = airSensor.getTemperature(); //- userSettings.temperatureOffset;
 			lastVal.hum = airSensor.getHumidity();			  //-userSettings.CO2offset;
-			if (skipFirstReadings == 0) { // firstReadings Co2 often wrong 
-				if (lastVal.co2 > 350) { // first measurement invalid, reject
+			if (skipFirstReadings == 0) {					  // firstReadings Co2 often wrong
+				if (lastVal.co2 > 350) {					  // first measurement invalid, reject
 					co2Averager.write(lastVal.co2 * 1000.0);
 					tempAverager.write(lastVal.temperature * 1000.0);
 					humAverager.write(lastVal.hum * 1000.0);
@@ -232,11 +234,7 @@ void sensirionTask(void *pvParameter) {
 				skipFirstReadings--;
 				lastVal.co2 = 9999;
 			}
-
 			updatePID(lastVal.temperature - userSettings.temperatureOffset);
-
-			// ESP_LOGI(TAG, "t: %f co2:%f", lastVal.temperature, lastVal.co2);
-
 			for (int n = 0; n < NR_SENSORVALUES; n++) {
 				displayMssg.line = n;
 				displayMssg.str1 = displayStr[n];
@@ -257,14 +255,31 @@ void sensirionTask(void *pvParameter) {
 					break;
 				}
 				if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
-					ESP_LOGE(TAG, "to");
-
-				//	printf( "line: %d, text: %s\n", displayMssg.line, (char *)displayMssg.str1);
+					ESP_LOGE(TAG, "displayto");
 			}
+		}
+
+		if (sensirionError) {
+			ESP_LOGE(TAG, "Error");
+			for (int n = 0; n < NR_SENSORVALUES; n++) {
+				displayMssg.line = n;
+				displayMssg.str1 = displayStr[n];
+				sprintf(displayStr[n], "----");
+				if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
+					ESP_LOGE(TAG, "display to 2");
+			}
+			avgVal.co2 = 9999; // errorvalue for WTW
+			co2Averager.clear();
+			tempAverager.clear();
+			humAverager.clear();
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+		} 
+		else
+		{
 #ifdef TURBO_MODE
 			addToLog(avgVal); // add to cyclic log buffer
 #else
-			if ((co2Averager.getNrValues() >=2 ) && (lastminute != timeinfo.tm_min)) {
+			if ((co2Averager.getNrValues() >= 2) && (lastminute != timeinfo.tm_min)) {
 				avgVal.co2 = co2Averager.average() / 1000.0;
 				avgVal.temperature = tempAverager.average() / 1000.0;
 				avgVal.hum = humAverager.average() / 1000.0;
@@ -296,7 +311,7 @@ void sensirionTask(void *pvParameter) {
 				}
 			}
 		}
-	} // end while(1)
+	}
 } // end sensirionTask
 
 void getAvgMeasValues(sensorMssg_t *dest) {

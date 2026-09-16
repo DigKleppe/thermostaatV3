@@ -33,7 +33,7 @@ systemInfo_t systemInfoDefaults = { 0,0,0,0,0,0,{SYSTEMINFO_CHECKSTR }};
 const userSettings_t userSettingsDefaults = {
 	{"Thermostaat"},
 	21.0, 	//temperatureSetpoint
-	2,  	//temperatureOffset
+	3.4,  	//temperatureOffset
 	0.0,	//RHoffset
 	20,		//PIDp
 	0.5, 	//PIDi
