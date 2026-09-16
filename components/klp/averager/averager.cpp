@@ -81,3 +81,7 @@ float Averager::average( void){
 	return result;
 }
 
+uint32_t Averager::getNrValues (void) {
+	return bufValues;
+}
+

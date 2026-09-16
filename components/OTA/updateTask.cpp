@@ -106,87 +106,82 @@ void updateTask(void *pvParameter) {
 	} while (hpptActive);
 
 	hpptActive = true; // sorry
-	// do {
-	// 	ESP_LOGI(TAG, "wait semaphore ");
-	// } while (xSemaphoreTake(hpptReqSemphore, 1000/ portTICK_PERIOD_MS ) == pdFALSE );
 
-	if (1) {
-		//	if (xSemaphoreTake(hpptReqSemphore, portMAX_DELAY) == pdTRUE) { // shared with knmiTask
-		ESP_LOGI(TAG, "semaphore taken");
-		getNewVersion(BINARY_INFO_FILENAME, newVersion);
-		if (newVersion[0] != 0) {
-			if (strcmp(newVersion, wifiSettings.firmwareVersion) != 0) {
-				ESP_LOGI(TAG, "New firmware version available: %s", newVersion);
-				doUpdate = true;
-			} else
-				ESP_LOGI(TAG, "Firmware up to date: %s", newVersion);
-		} else {
-			ESP_LOGI(TAG, "Reading New firmware info failed");
-			error = true;
-		}
-
-		if (doUpdate) {
-			ESP_LOGI(TAG, "Updating firmware to version: %s", newVersion);
-			xTaskCreate(&updateFirmwareTask, "updateFirmwareTask", 4 * 1024, NULL, 5, &updateFWTaskh);
-			vTaskDelay(100 / portTICK_PERIOD_MS);
-			while (updateStatus == UPDATE_BUSY)
-				vTaskDelay(100 / portTICK_PERIOD_MS);
-
-			if (updateStatus == UPDATE_RDY) {
-				strcpy(wifiSettings.firmwareVersion, newVersion);
-				saveSettings();
-				ESP_LOGI(TAG, "Update successfull, restarting system!");
-				vTaskDelay(100 / portTICK_PERIOD_MS);
-				esp_restart();
-			} else {
-				ESP_LOGI(TAG, "Update firmware failed!");
-				vTaskDelay(10000 / portTICK_PERIOD_MS);
-				error = true;
-			}
-		}
-
-		// ********************* SPIFFS update ***************************
-		newVersion[0] = 0;
-		doUpdate = false;
-		getNewVersion(SPIFFS_INFO_FILENAME, newVersion);
-		if (newVersion[0] != 0) {
-			if (strcmp(newVersion, wifiSettings.SPIFFSversion) != 0) {
-				ESP_LOGI(TAG, "New SPIFFS version available: %s", newVersion);
-				doUpdate = true;
-			} else
-				ESP_LOGI(TAG, "SPIFFS up to date: %s", newVersion);
-		} else {
-			ESP_LOGI(TAG, "Reading New SPIFFS info failed");
-			error = true;
-		}
-
-		if (doUpdate) {
-			ESP_LOGI(TAG, "Updating SPIFFS to version: %s", newVersion);
-			xTaskCreate(&updateSpiffsTask, "updateSpiffsTask", 4 * 1024, NULL, 5, &updateSPIFFSTaskh);
-			vTaskDelay(100 / portTICK_PERIOD_MS);
-
-			while (updateStatus == UPDATE_BUSY) // wait for task to finish
-				vTaskDelay(100 / portTICK_PERIOD_MS);
-
-			if (updateStatus == UPDATE_RDY) {
-				ESP_LOGI(TAG, "SPIFFS flashed OK, restarting system!");
-				strcpy(wifiSettings.SPIFFSversion, newVersion);
-				saveSettings();
-				vTaskDelay(100 / portTICK_PERIOD_MS);
-				esp_restart();
-			} else
-				ESP_LOGI(TAG, "Update SPIFFS failed!");
-		}
-
-		ESP_LOGI(TAG, "finished");
-		updateTaskHasFinished = true;
-		vTaskDelay(10);
+	ESP_LOGI(TAG, "semaphore taken");
+	getNewVersion(BINARY_INFO_FILENAME, newVersion);
+	if (newVersion[0] != 0) {
+		if (strcmp(newVersion, wifiSettings.firmwareVersion) != 0) {
+			ESP_LOGI(TAG, "New firmware version available: %s", newVersion);
+			doUpdate = true;
+		} else
+			ESP_LOGI(TAG, "Firmware up to date: %s", newVersion);
+	} else {
+		ESP_LOGI(TAG, "Reading New firmware info failed");
+		error = true;
 	}
+
+	if (doUpdate) {
+		ESP_LOGI(TAG, "Updating firmware to version: %s", newVersion);
+		xTaskCreate(&updateFirmwareTask, "updateFirmwareTask", 4 * 1024, NULL, 5, &updateFWTaskh);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
+		while (updateStatus == UPDATE_BUSY)
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+
+		if (updateStatus == UPDATE_RDY) {
+			strcpy(wifiSettings.firmwareVersion, newVersion);
+			saveSettings();
+			ESP_LOGI(TAG, "Update successfull, restarting system!");
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			esp_restart();
+		} else {
+			ESP_LOGI(TAG, "Update firmware failed!");
+			vTaskDelay(10000 / portTICK_PERIOD_MS);
+			error = true;
+		}
+	}
+
+	// ********************* SPIFFS update ***************************
+	newVersion[0] = 0;
+	doUpdate = false;
+	getNewVersion(SPIFFS_INFO_FILENAME, newVersion);
+	if (newVersion[0] != 0) {
+		if (strcmp(newVersion, wifiSettings.SPIFFSversion) != 0) {
+			ESP_LOGI(TAG, "New SPIFFS version available: %s", newVersion);
+			doUpdate = true;
+		} else
+			ESP_LOGI(TAG, "SPIFFS up to date: %s", newVersion);
+	} else {
+		ESP_LOGI(TAG, "Reading New SPIFFS info failed");
+		error = true;
+	}
+
+	if (doUpdate) {
+		ESP_LOGI(TAG, "Updating SPIFFS to version: %s", newVersion);
+		xTaskCreate(&updateSpiffsTask, "updateSpiffsTask", 4 * 1024, NULL, 5, &updateSPIFFSTaskh);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
+
+		while (updateStatus == UPDATE_BUSY) // wait for task to finish
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+
+		if (updateStatus == UPDATE_RDY) {
+			ESP_LOGI(TAG, "SPIFFS flashed OK, restarting system!");
+			strcpy(wifiSettings.SPIFFSversion, newVersion);
+			saveSettings();
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			esp_restart();
+		} else
+			ESP_LOGI(TAG, "Update SPIFFS failed!");
+	}
+
+	ESP_LOGI(TAG, "finished");
+	updateTaskHasFinished = true;
+	vTaskDelay(10);
+
 	//	xSemaphoreGive(hpptReqSemphore);
 
 	hpptActive = false; // sorry
 	updateTaskh = NULL;
-	if( error)
+	if (error)
 		updateTaskError = true;
 	vTaskDelete(NULL);
 }

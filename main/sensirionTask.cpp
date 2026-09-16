@@ -174,14 +174,16 @@ void sensirionTask(void *pvParameter) {
 	tempAverager.setAverages(AVERAGES);
 	humAverager.setAverages(AVERAGES);
 
-	while ((airSensor.begin(I2CbusHandle, false, true) != ESP_OK) && (sensirionTimeoutTimer-- > 0)) {
+
+	while (airSensor.begin(I2CbusHandle, false, true) != ESP_OK)  {
 		ESP_LOGE(TAG, "Air sensor not detected");
+		if( sensirionTimeoutTimer > 0 ) 
+			sensirionTimeoutTimer--;
+		else
+			sensirionError = true;
 		vTaskDelay(2000 / portTICK_PERIOD_MS);
 	}
-	if (sensirionTimeoutTimer <= 0) {
-		sensirionError = true;
-		vTaskDelete(NULL);
-	}
+
 
 	if (airSensor.setMeasurementInterval(20) != ESP_OK)
 		ESP_LOGE(TAG, "Error setMeasurementInterval");
@@ -213,9 +215,7 @@ void sensirionTask(void *pvParameter) {
 
 			sensirionTimeoutTimer = SCD30_TIMEOUT;
 			while ((airSensor.begin(I2CbusHandle, false, false) != ESP_OK) && (sensirionTimeoutTimer-- > 0))
-				;
-
-			vTaskDelay(200 / portTICK_PERIOD_MS);
+				vTaskDelay(200 / portTICK_PERIOD_MS);
 		}
 		if (airSensor.readMeasurement() == ESP_OK) {
 			sensirionTimeoutTimer = SCD30_TIMEOUT;
@@ -264,7 +264,7 @@ void sensirionTask(void *pvParameter) {
 #ifdef TURBO_MODE
 			addToLog(avgVal); // add to cyclic log buffer
 #else
-			if ((skipFirstReadings == 0) && (lastminute != timeinfo.tm_min)) {
+			if ((co2Averager.getNrValues() >=2 ) && (lastminute != timeinfo.tm_min)) {
 				avgVal.co2 = co2Averager.average() / 1000.0;
 				avgVal.temperature = tempAverager.average() / 1000.0;
 				avgVal.hum = humAverager.average() / 1000.0;

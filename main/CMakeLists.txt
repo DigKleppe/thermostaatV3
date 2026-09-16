@@ -7,7 +7,7 @@ set(COMPONENT_ADD_INCLUDEDIRS "include" ${WAVESHARE_BSP_DIR} )
 #set(COMPONENT_PRIV_REQUIRES  "driver esp_lcd esp_timer esp_mm touch ")
 #set(COMPONENT_PRIV_REQUIRES  "lvgl esp_driver_ledc esp_driver_ppa esp_mm esp_lcd esp_timer touch lcd")
 
-set(COMPONENT_EMBED_TXTFILES "${project_dir}/main/server_certs/ca_cert.pem")
+#set(COMPONENT_EMBED_TXTFILES "${project_dir}/main/server_certs/ca_cert.pem")
 register_component()
 
 spiffs_create_partition_image(storage ../spiffs_image FLASH_IN_PROJECT)

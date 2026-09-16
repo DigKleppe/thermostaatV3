@@ -9,7 +9,8 @@
 #include "esp_memory_utils.h"
 #include "esp_rom_sys.h"
 #include "freertos/FreeRTOS.h"
-//#include "freertos/semphr.h"
+// #include "freertos/semphr.h"
+#include "autoCalTask.h"
 #include "freertos/task.h"
 #include "guiTask.h"
 #include "httpsReadFile.h"
@@ -20,7 +21,6 @@
 #include "sensirionTask.h"
 #include "settings.h"
 #include "wifiConnect.h"
-#include "autoCalTask.h"
 
 #ifdef USE_OTA
 #include "updateTask.h"
@@ -42,7 +42,7 @@ esp_err_t init_spiffs(void);
 
 #define TAG "main"
 
-//extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start"); // dummy, to pull in for linker
+// extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start"); // dummy, to pull in for linker
 const char *dummy;
 
 int moduleNr = 3; // sensor 3 for WTW
@@ -106,7 +106,7 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-//const char *dummycp;
+// const char *dummycp;
 
 #define MAXBL 50
 #define MINBL 12
@@ -127,7 +127,6 @@ void app_main(void) {
 	int lastSecond = -1;
 	lv_display_t *display;
 	i2c_master_bus_init(); // second port for SCD30 todo make class
-//	dummycp = server_root_cert_pem_start;
 
 	gpio_set_direction(RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
 	gpio_set_direction(RS485TX_PIN, GPIO_MODE_OUTPUT);
@@ -164,18 +163,15 @@ void app_main(void) {
 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 
-	// strcpy( wifiSettings.SSID , ( char *) "Klepnet2");
-	// strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
-	
-	//strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
-	// strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
+	// #warning "fixed SSID"
+	//  strcpy( wifiSettings.SSID , ( char *) "Klepnet2");
+	//  strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
 
-	//strcpy( wifiSettings.firmwareVersion , ( char *) "12.34!");
+	// strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
+	//  strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
 
-//#warning "wifiSettings.firmwareVersion"
-
-//#warning "fixed SSID"
-
+	// strcpy( wifiSettings.firmwareVersion , ( char *) "12.34!");
+	// #warning "wifiSettings.firmwareVersion"
 
 	wifiConnect();
 
@@ -262,8 +258,8 @@ void app_main(void) {
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
 			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
 			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
-			
-			#ifdef USE_OTA
+
+#ifdef USE_OTA
 			if (updateTaskh != NULL) {
 				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
 				if (updateFWTaskh != NULL)
@@ -272,9 +268,8 @@ void app_main(void) {
 				if (updateSPIFFSTaskh != NULL)
 					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
 			}
-			#endif
+#endif
 		}
-
 
 		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
 		// heap_caps_print_heap_info(MALLOC_CAP_DMA);

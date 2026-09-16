@@ -12,20 +12,20 @@
 
 #include <stdint.h>
 
-
 class Averager {
 public:
-	Averager( uint32_t averages = 5);
+	Averager(uint32_t averages = 5);
 	int32_t write(int32_t value);
 	float average();
-	void * setAverages( uint32_t);
+	void *setAverages(uint32_t);
 	void clear();
+	uint32_t getNrValues();
+
 private:
-	int32_t * pBuffer;
+	int32_t *pBuffer;
 	uint32_t bufSize;
 	uint32_t bufValues;
 	uint32_t bufWriteIndex;
 };
-
 
 #endif

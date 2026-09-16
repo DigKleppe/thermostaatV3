@@ -490,7 +490,7 @@ void connectTask(void *pvParameters) {
 		if (timeOutCounter > 0) {
 			timeOutCounter -= TASKINTERVAL;
 		}
-	//	ESP_LOGI(TAG, "step: %d", connectStep);
+//		ESP_LOGI(TAG, "step: %d  updTmr: %d", connectStep , updateTimer);
 
 		if (connectRestart) {
 			connectRestart = false;
@@ -668,8 +668,8 @@ void connectTask(void *pvParameters) {
 					vTaskDelay(100 / portTICK_PERIOD_MS);
 				} while (!updateTaskHasFinished);
 				if (updateTaskError) {
-					updateTimer = 60 * 60 * 10; // retry after 1 hour
-					ESP_LOGI(TAG, "updateTask failed");
+					updateTimer = 60 * 60 * 10; // retry after 60 minutes
+					ESP_LOGE(TAG, "updateTask failed");
 				}
 
 				ESP_LOGI(TAG, "updateTask has finished");
@@ -735,7 +735,7 @@ void wifiConnect(void) {
 		strcpy((char *)wifiSettings.pwd, wifiSettingsDefaults.pwd);
 		saveSettings();
 	}
-	xTaskCreate(connectTask, "connectTask", 1024 * 5, NULL, 5, &connectTaskh);
+	xTaskCreate(connectTask, "connectTask", 1024 * 4, NULL, 5, &connectTaskh); 
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
 void restartWifi(void) { connectRestart = true; }
