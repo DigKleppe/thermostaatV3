@@ -106,10 +106,15 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-// const char *dummycp;
+
+void esp_task_wdt_isr_user_handler(void) {
+	esp_restart();
+}
+
 
 #define MAXBL 50
 #define MINBL 12
+
 void setBacklight(int value) { // 5-100
 	float perc = MINBL + (value - 5) * (MAXBL / 100.0);
 	ESP_LOGI(TAG, "BL %f", perc);
