@@ -205,7 +205,8 @@ esp_err_t SCD30::begin(i2c_master_bus_handle_t I2CbusHandle, bool autoCalibrate,
 		ESP_LOGE(TAG, "TESTPOINTS ON!");
 #endif 
 
-
+static bool once = true;
+if ( once ) {
 	i2c_device_config_t dev_cfg = {
 		.dev_addr_length = I2C_ADDR_BIT_LEN_7,
 		.device_address = SCD30_ADDRESS,
@@ -216,7 +217,8 @@ esp_err_t SCD30::begin(i2c_master_bus_handle_t I2CbusHandle, bool autoCalibrate,
 		ESP_LOGE(TAG, "Error adding SCD30 to I2Cbus");
 		return err;
 	}
-
+	once = false;
+}
 	simulate = false;
 	uint16_t fwVer;
 

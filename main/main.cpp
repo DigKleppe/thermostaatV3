@@ -171,7 +171,8 @@ void app_main(void) {
 	//  strcpy( wifiSettings.pwd , ( char *) "Yellowstone1999");
 
 	// strcpy( wifiSettings.SSID , ( char *) "Steinmeier");
-	//  strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
+	// strcpy( wifiSettings.pwd , ( char *) "Welkom12.34!");
+	// saveSettings();
 
 	// strcpy( wifiSettings.firmwareVersion , ( char *) "12.34!");
 	// #warning "wifiSettings.firmwareVersion"
@@ -261,29 +262,29 @@ void app_main(void) {
 		if (displayMssgBox)
 			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
 
-// 		if (presc-- <= 0) {
-// 			presc = 20;
-// 			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
-// 			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
-// 			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-// 			// ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
-// 			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
-// 			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
-// 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
-// 			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
-// 			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+		if (presc-- <= 0) {
+			presc = 20;
+			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
+			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
+			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
+			ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
+			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
+			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
+			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
+			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
 
-// #ifdef USE_OTA
-// 			if (updateTaskh != NULL) {
-// 				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
-// 				if (updateFWTaskh != NULL)
-// 					ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
+#ifdef USE_OTA
+			if (updateTaskh != NULL) {
+				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
+				if (updateFWTaskh != NULL)
+					ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
 
-// 				if (updateSPIFFSTaskh != NULL)
-// 					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
-// 			}
-// #endif
-// 		}
+				if (updateSPIFFSTaskh != NULL)
+					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
+			}
+#endif
+		}
 
 		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
 		// heap_caps_print_heap_info(MALLOC_CAP_DMA);
