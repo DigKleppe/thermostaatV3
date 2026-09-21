@@ -254,8 +254,10 @@ void sensirionTask(void *pvParameter) {
 						sprintf(displayStr[n], "%2.0f", lastVal.co2);
 					break;
 				}
-				if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
-					ESP_LOGE(TAG, "displayto");
+				if (displayMssgBox != NULL) {
+					if (xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME) != pdPASS)
+						ESP_LOGE(TAG, "displayto");
+				}
 			}
 		}
 
@@ -273,9 +275,7 @@ void sensirionTask(void *pvParameter) {
 			tempAverager.clear();
 			humAverager.clear();
 			vTaskDelay(100 / portTICK_PERIOD_MS);
-		} 
-		else
-		{
+		} else {
 #ifdef TURBO_MODE
 			addToLog(avgVal); // add to cyclic log buffer
 #else

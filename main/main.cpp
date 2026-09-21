@@ -106,6 +106,7 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
+//#define NODISPLAY
 
 void esp_task_wdt_isr_user_handler(void) {
 	esp_restart();
@@ -114,13 +115,13 @@ void esp_task_wdt_isr_user_handler(void) {
 
 #define MAXBL 50
 #define MINBL 12
-
+#ifndef NODISPLAY
 void setBacklight(int value) { // 5-100
 	float perc = MINBL + (value - 5) * (MAXBL / 100.0);
 	ESP_LOGI(TAG, "BL %f", perc);
 	bsp_display_brightness_set((int)perc);
 }
-
+#endif
 void app_main(void) {
 	esp_err_t err;
 	int presc = 1;
@@ -162,9 +163,6 @@ void app_main(void) {
 
 	err = loadSettings();
 
-	// httpActive = xSemaphoreCreateBinary();
-	// xSemaphoreGive(httpActive);
-
 	httpsReqMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 	httpsReqRdyMssgBox = xQueueCreate(1, sizeof(httpsMssg_t));
 
@@ -181,13 +179,18 @@ void app_main(void) {
 	wifiConnect();
 
 	board_i2c_recover();
+
+	#ifndef NODISPLAY
 	display = bsp_display_start();
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
 
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
+	#endif
+
 	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
+
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
 	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
@@ -200,8 +203,11 @@ void app_main(void) {
 	//     // printf("\n free heap size = %d \t  min_free_heap_size = %d \n",free_heap_size,min_free_heap_size);
 	// 	vTaskDelay(1000);
 	// }
+
+	#ifndef NODISPLAY
 	setBacklight(userSettings.backLight);
 	bsp_display_unlock();
+	#endif
 
 	while (1) {
 		vTaskDelay(200 / portTICK_PERIOD_MS);
@@ -219,7 +225,10 @@ void app_main(void) {
 
 		if (settingsChanged) {
 			minuteCntr = 60;
+			#ifndef NODISPLAY
 			setBacklight(userSettings.backLight);
+			#endif
+
 			settingsChanged = false;
 		}
 		if (minuteCntr) {

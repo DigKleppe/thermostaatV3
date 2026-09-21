@@ -490,7 +490,7 @@ void connectTask(void *pvParameters) {
 		if (timeOutCounter > 0) {
 			timeOutCounter -= TASKINTERVAL;
 		}
-//		ESP_LOGI(TAG, "step: %d  updTmr: %d", connectStep , updateTimer);
+		//	ESP_LOGI(TAG, "step: %d  updTmr: %d", connectStep , updateTimer);
 
 		if (connectRestart) {
 			connectRestart = false;
@@ -508,7 +508,7 @@ void connectTask(void *pvParameters) {
 		case 0:
 			ESP_LOGI(TAG, "Connecting to: %s pw:%s", wifiSettings.SSID, wifiSettings.pwd);
 			wifi_init_sta();
-		//	start_file_server("/spiffs");
+			//	start_file_server("/spiffs");
 			connectStep++;
 			break;
 		case 1:
@@ -524,12 +524,12 @@ void connectTask(void *pvParameters) {
 #ifdef CONFIG_WPS_ENABLED
 				// if (esp_reset_reason() == ESP_RST_SW) // no wps if rebooted from checksystemtask
 				// 	wpsOff = true;
-			#ifndef NOSCAN	
+#ifndef NOSCAN
 				while (ap_count == 0) {
 					perform_wifi_scan();
 					vTaskDelay(1000 / portTICK_PERIOD_MS);
 				}
-			#endif	
+#endif
 				if (!wpsOff) {
 					connectStep++;
 					connectStatus = WPS_ACTIVE;
@@ -598,14 +598,14 @@ void connectTask(void *pvParameters) {
 			case IP_RECEIVED:
 				if (!DNSoff)
 					initialiseMdns(userSettings.moduleName);
-				#ifndef NOSCAN	
+#ifndef NOSCAN
 				while (ap_count == 0) {
 					perform_wifi_scan();
 					vTaskDelay(1000 / portTICK_PERIOD_MS);
 				}
-				#endif
+#endif
 				connectStep++;
-				delay = 100; // = 1 sec
+				delay = 10; // = 1 sec
 				break;
 			default:
 				break;
@@ -626,6 +626,7 @@ void connectTask(void *pvParameters) {
 				connectStep = 1;
 #ifdef USE_OTA
 			else {
+
 				updateTimer--;
 				if ((updateTimer <= 0) || forceUpdate) {
 					updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
@@ -735,7 +736,7 @@ void wifiConnect(void) {
 		strcpy((char *)wifiSettings.pwd, wifiSettingsDefaults.pwd);
 		saveSettings();
 	}
-	xTaskCreate(connectTask, "connectTask", 1024 * 4, NULL, 5, &connectTaskh); 
+	xTaskCreate(connectTask, "connectTask", 1024 * 4, NULL, 5, &connectTaskh);
 	g_pCGIs = CGIurls; // for file_server to read CGIurls
 }
 void restartWifi(void) { connectRestart = true; }
