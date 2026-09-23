@@ -18,6 +18,9 @@
 #include <stdio.h>
 
 #include "settings.h"
+#include "freertos/FreeRTOS.h"
+#include "esp_memory_utils.h"
+#include "esp_heap_caps.h"
 
 #ifdef LV_CONF_INCLUDE_SIMPLE
 #include "lvgl.h"
@@ -87,19 +90,22 @@ MeasScreen::MeasScreen() {
 
 void MeasScreen::setSetpointValue(void) {
 	char str[40];
-	if (!userSettings.coolingOn && !userSettings.heatingOn) {
-		lv_label_set_text(setpointLabel, "Verwarming en koeling uit.");
-	} else {
-		if (!userSettings.coolingOn && userSettings.heatingOn)
-			strcpy(str, "Verwarming");
-		if (userSettings.coolingOn && !userSettings.heatingOn)
-			strcpy(str, "Koeling");
-		if (userSettings.coolingOn && userSettings.heatingOn)
-			strcpy(str, "Temperatuur");
+	sprintf (str,"%d", xPortGetFreeHeapSize());
+ 	lv_label_set_text(setpointLabel, str);
 
-		sprintf(str + strlen(str), " ingesteld op %2.1f %s.", userSettings.temperatureSetpoint, units[0]);
-		lv_label_set_text(setpointLabel, str);
-	}
+	// if (!userSettings.coolingOn && !userSettings.heatingOn) {
+	// 	lv_label_set_text(setpointLabel, "Verwarming en koeling uit.");
+	// } else {
+	// 	if (!userSettings.coolingOn && userSettings.heatingOn)
+	// 		strcpy(str, "Verwarming");
+	// 	if (userSettings.coolingOn && !userSettings.heatingOn)
+	// 		strcpy(str, "Koeling");
+	// 	if (userSettings.coolingOn && userSettings.heatingOn)
+	// 		strcpy(str, "Temperatuur");
+
+	// 	sprintf(str + strlen(str), " ingesteld op %2.1f %s.", userSettings.temperatureSetpoint, units[0]);
+	// 	lv_label_set_text(setpointLabel, str);
+	// }
 }
 
 void MeasScreen::setDisplayText(int line, char *text) {

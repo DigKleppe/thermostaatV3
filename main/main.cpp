@@ -22,6 +22,8 @@
 #include "settings.h"
 #include "wifiConnect.h"
 
+//#define NODISPLAY
+
 #ifdef USE_OTA
 #include "updateTask.h"
 #endif
@@ -106,7 +108,7 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#define NODISPLAY
+
 
 void esp_task_wdt_isr_user_handler(void) {
 	esp_restart();
@@ -179,6 +181,13 @@ void app_main(void) {
 
 	wifiConnect();
 
+
+	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
+
+	do {
+		vTaskDelay (100);
+	} while (! timeIsSet);
+
 	board_i2c_recover();
 
 	#ifndef NODISPLAY
@@ -190,12 +199,12 @@ void app_main(void) {
 	vTaskDelay(100);
 	#endif
 
-	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
+//	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
 
-	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
-	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
-	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
-	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
+//	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
+//	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
+//	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
+//	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
 
 	// while(1) {
 	// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;
@@ -265,9 +274,10 @@ void app_main(void) {
 		if (presc-- <= 0) {
 			presc = 20;
 			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
+			
 			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
 			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-			ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			//ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
 			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
 			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));

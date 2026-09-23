@@ -62,9 +62,12 @@ const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 							// todo	
 								{"Temp. offset:", "%1.1f", &userSettings.temperatureOffset},
 								{"RH offset:", "%1.1f", &userSettings.RHoffset},
-								{"PID:", "%2.2f", &PIDsetting},
+							//	{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTimeHrs},
+								{"KNMI fout:", "%d", &systemInfo.knmiFails},
+								{"Update OK:", "%d", &systemInfo.updateSuccess},
+								{"Update Fout:", "%d", &systemInfo.updateFails},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
@@ -146,6 +149,7 @@ void guiTask(void *pvParameter) {
 
 			case DISPLAY_ITEM_MEASLINE:
 				measScreen->setDisplayText(recDdisplayMssg.line, (char *)recDdisplayMssg.str1);
+				measScreen->setSetpointValue(); //test
 				break;
 
 			case DISPLAY_ITEM_CLOCK:

@@ -71,9 +71,9 @@ void updateTask(void *pvParameter) {
 	bool error = false;
 	char newVersion[MAX_STORAGEVERSIONSIZE];
 
-	while (!timeIsSet) {
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
-	}
+	// while (!timeIsSet) {
+	// 	vTaskDelay(1000 / portTICK_PERIOD_MS);
+	// }
 
 	ESP_LOGI(TAG, "Running");
 	updateTaskHasFinished = false;
@@ -85,7 +85,6 @@ void updateTask(void *pvParameter) {
 		strcpy(wifiSettings.upgradeURL, CONFIG_DEFAULT_FIRMWARE_UPGRADE_URL);
 		saveSettings();
 	}
-
 	const esp_partition_t *update_partition = NULL;
 	const esp_partition_t *configured = esp_ota_get_boot_partition();
 	const esp_partition_t *running = esp_ota_get_running_partition();

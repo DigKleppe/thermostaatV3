@@ -535,7 +535,7 @@ void connectTask(void *pvParameters) {
 					connectStatus = WPS_ACTIVE;
 					ESP_LOGI(TAG, "WPS Active");
 					ESP_ERROR_CHECK(esp_wifi_wps_enable(&wpsConfig));
-					ESP_ERROR_CHECK(esp_wifi_wps_start(0));
+					ESP_ERROR_CHECK(esp_wifi_wps_start());
 					wpsActive = true;
 					timeOutCounter = (WPS_TIMEOUTTIME * 1000);
 				} else {
@@ -629,7 +629,9 @@ void connectTask(void *pvParameters) {
 
 				updateTimer--;
 				if ((updateTimer <= 0) || forceUpdate) {
-					updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
+				//	updateTimer = CONFIG_CHECK_FIRMWARWE_UPDATE_INTERVAL * 60 * 60 * 10;
+				//	updateTimer = 1 * 60 * 60 * 10;
+					updateTimer = 1 * 60 * 10; // retry after 1 minutes
 					forceUpdate = false;
 					if (staticIPisSet) {
 						staticIPisSet = false;
@@ -664,14 +666,20 @@ void connectTask(void *pvParameters) {
 			case CONNECTED:
 			case IP_RECEIVED:
 			case CONNECT_READY:
-				xTaskCreate(&updateTask, "updateTask", 6 * 1024, NULL, 1, &updateTaskh);
+				xTaskCreate(&updateTask, "updateTask", 5 * 1024, NULL, 1, &updateTaskh);
 				do {
 					vTaskDelay(100 / portTICK_PERIOD_MS);
 				} while (!updateTaskHasFinished);
 				if (updateTaskError) {
-					updateTimer = 60 * 60 * 10; // retry after 60 minutes
+			//		updateTimer = 60 * 60 * 10; // retry after 60 minutes
+
+					updateTimer = 1 * 60 * 10; // retry after 60 minutes
 					ESP_LOGE(TAG, "updateTask failed");
+					systemInfo.updateFails++;
 				}
+				else
+					systemInfo.updateSuccess++;
+
 
 				ESP_LOGI(TAG, "updateTask has finished");
 				if (advSettings.fixedIPdigit > 0) { // start over connection with static ip

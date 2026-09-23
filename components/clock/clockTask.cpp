@@ -23,23 +23,41 @@
 volatile bool clockSynced;
 struct tm timeinfo;
 static const char *TAG = "Clock";
-#define CONFIG_SNTP_TIME_SERVER "pool.ntp.org"
 volatile bool timeIsSet;
 
-// #define MAXDISPLAYS 5
-// ClockDisplay *clockToUpdate[MAXDISPLAYS];
-// int clockDisplays;
+#define CONFIG_SNTP_TIME_SERVER "pool.ntp.org"
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 48
+#endif
 
-// void registerTimeUpdate(ClockDisplay *p) {
-// 	if (clockDisplays < MAXDISPLAYS)
-// 		clockToUpdate[clockDisplays++] = p;
-// 	else
-// 		ESP_LOGE(TAG, "Maximum number clockDisplays reached");
-// }
+void time_sync_notification_cb(struct timeval *tv)
+{
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
+}
+
+static void print_servers(void)
+{
+    ESP_LOGI(TAG, "List of configured NTP servers:");
+
+    for (uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i){
+        if (esp_sntp_getservername(i)){
+            ESP_LOGI(TAG, "server %d: %s", i, esp_sntp_getservername(i));
+        } else {
+            // we have either IPv4 or IPv6 address, let's print it
+            char buff[INET6_ADDRSTRLEN];
+            ip_addr_t const *ip = esp_sntp_getserver(i);
+            if (ipaddr_ntoa_r(ip, buff, INET6_ADDRSTRLEN) != NULL)
+                ESP_LOGI(TAG, "server %d: %s", i, buff);
+        }
+    }
+}
+
+
 
 static void initialize_sntp(void) {
 	ESP_LOGI(TAG, "Initializing and starting SNTP");
 	esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
+	config.sync_cb = time_sync_notification_cb;     // Note: This is only needed if we want
 	esp_netif_sntp_init(&config);
 }
 
@@ -68,11 +86,17 @@ void clockTask(void *pvParameter) {
 	int retry = 0;
 
 	const int retry_count = 20;
-	while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) { //  && ++retry < retry_count) {
-		ESP_LOGI(TAG, "Waiting for system time to be set... );// (%d/%d)", retry, retry_count);
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
-	}
+	// while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) { //  && ++retry < retry_count) {
+	// 	ESP_LOGI(TAG, "Waiting for system time to be set... );// (%d/%d)", retry, retry_count);
+	// 	vTaskDelay(5000 / portTICK_PERIOD_MS);
+	// }
 	
+
+    while (esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS) == ESP_ERR_TIMEOUT && ++retry < retry_count) {
+        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+    }
+
+
 	timeIsSet = true;
 	do {
 		time(&now);
