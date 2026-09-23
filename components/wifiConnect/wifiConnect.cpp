@@ -535,7 +535,7 @@ void connectTask(void *pvParameters) {
 					connectStatus = WPS_ACTIVE;
 					ESP_LOGI(TAG, "WPS Active");
 					ESP_ERROR_CHECK(esp_wifi_wps_enable(&wpsConfig));
-					ESP_ERROR_CHECK(esp_wifi_wps_start());
+					ESP_ERROR_CHECK(esp_wifi_wps_start(0));
 					wpsActive = true;
 					timeOutCounter = (WPS_TIMEOUTTIME * 1000);
 				} else {

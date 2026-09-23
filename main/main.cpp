@@ -125,6 +125,7 @@ void setBacklight(int value) { // 5-100
 void app_main(void) {
 	esp_err_t err;
 	int presc = 1;
+	int waitsForTime = 5;
 	int minuteCntr = 0;
 	char str[30];
 	char str2[25];
@@ -179,6 +180,13 @@ void app_main(void) {
 
 	wifiConnect();
 
+	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);  // wait 5 seconds for time 
+	do {
+		vTaskDelay( 1000/portTICK_PERIOD_MS);
+		waitsForTime--;
+	} while ( !timeIsSet && waitsForTime >0 ); // much faster is LCD not on ????
+
+
 	board_i2c_recover();
 
 	#ifndef NODISPLAY
@@ -189,8 +197,6 @@ void app_main(void) {
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
 	#endif
-
-	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);
 
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
 	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
@@ -267,7 +273,7 @@ void app_main(void) {
 			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
 			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
 			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-			ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			//ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
 			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
 			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
