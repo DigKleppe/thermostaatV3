@@ -125,7 +125,7 @@ void setBacklight(int value) { // 5-100
 void app_main(void) {
 	esp_err_t err;
 	int presc = 1;
-	int waitsForTime = 5;
+	int waitsForTime = 7;
 	int minuteCntr = 0;
 	char str[30];
 	char str2[25];
