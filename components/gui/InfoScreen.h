@@ -17,7 +17,7 @@
 #include "InfoDisplay.h"
 #include "NavigArrows.h"
 
-#define MAXNR_INFO 10
+#define MAXNR_INFO 15
 
 
 

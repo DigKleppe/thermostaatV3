@@ -34,6 +34,7 @@ static const char *TAG = "KNMItask";
 
 #define READBUFFERSIZE 1200
 float buitenTemperatuur = ERROR_TEMPERATURE;
+int knmiErrs;
 
 // #define SAMPLEPERIOD 10
 // #define FIRSTSAMPLEOFFSET (60 + SAMPLEPERIOD) // wintertijd GMT
@@ -78,7 +79,7 @@ static float get_temperature(void) {
 	memset((uint8_t *)&config, 0, sizeof(config));
 	config.url = url;
 	config.method = HTTP_METHOD_GET;
-	config.timeout_ms = 10000;
+	config.timeout_ms = 20000;
 	config.cert_pem = NULL;						// NULL betekent: gebruik de ingebouwde certificatenbundel
 	config.skip_cert_common_name_check = false; // CN validatie inschakelen
 	config.keep_alive_enable = false;
@@ -169,6 +170,7 @@ void KNMItask(void *parameters) {
 			vTaskDelay(pdMS_TO_TICKS(1 * 60  * 1000));
 		} else {
 			ESP_LOGE(TAG, "❌ Kon temperatuur niet ophalen");
+			knmiErrs++;
 			vTaskDelay(pdMS_TO_TICKS(10 * 1000));
 		}
 			

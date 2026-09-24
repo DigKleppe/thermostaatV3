@@ -47,6 +47,8 @@ const char *dummy;
 
 int moduleNr = 3; // sensor 3 for WTW
 int rssi;
+int minHeapSize;
+
 #define BOARD_I2C_SDA GPIO_NUM_15
 #define BOARD_I2C_SCL GPIO_NUM_7
 
@@ -183,10 +185,10 @@ void app_main(void) {
 	wifiConnect();
 
 	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);  // wait 5 seconds for time 
-	do {
-		vTaskDelay( 1000/portTICK_PERIOD_MS);
-		waitsForTime--;
-	} while ( !timeIsSet && waitsForTime >0 ); // much faster is LCD not on ????
+	// do {
+	// 	vTaskDelay( 1000/portTICK_PERIOD_MS);
+	// 	waitsForTime--;
+	// } while ( !timeIsSet && waitsForTime >0 ); // much faster is LCD not on ????
 
 
 	board_i2c_recover();
@@ -272,7 +274,10 @@ void app_main(void) {
 
 		if (presc-- <= 0) {
 			presc = 20;
-			ESP_LOGI(TAG, "freeHeapSize %d", xPortGetFreeHeapSize());
+			minHeapSize = xPortGetMinimumEverFreeHeapSize();
+
+			ESP_LOGI(TAG, "freeHeapSize %d  minEver: %d", xPortGetFreeHeapSize() , minHeapSize);
+
 			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
 			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
 			//ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));

@@ -46,6 +46,8 @@ extern float PIDsetting;
 extern char myIpAddress[];
 extern uint32_t upTimeHrs;
 extern int rssi;
+extern int minHeapSize;
+extern int knmiErrs;
 
 #define NRSCREENS 5
 
@@ -65,6 +67,7 @@ const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTimeHrs},
+								{"KNMIfouten:" ,"%d" , &knmiErrs},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
