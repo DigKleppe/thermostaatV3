@@ -21,6 +21,7 @@
 // extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
 
 extern volatile bool hpptActive;
+extern TaskHandle_t httpTaskh;
 
 // --- KNMI API gegevens ---
 // #define API_KEY in passwords.pwd
@@ -105,7 +106,7 @@ static float get_temperature(void) {
 	httpsRegParams.destbuffer = (uint8_t *)readBuffer;
 	httpsRegParams.maxChars = READBUFFERSIZE;
 
-	xTaskCreate(httpsGetRequestTask, "httpsReqTask", 4 * 1024, (void *)&httpsRegParams, 0, NULL);
+	xTaskCreate(httpsGetRequestTask, "httpsReqTask", 4 * 1024, (void *)&httpsRegParams, 0, &httpTaskh);
 
 	do {
 		//xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
@@ -164,7 +165,8 @@ void KNMItask(void *parameters) {
 		hpptActive = false; // sorry
 		if (buitenTemperatuur != -999.0) {
 			ESP_LOGI(TAG, "🌡️ Temperatuur in Wilhelminadorp: %.1f °C", buitenTemperatuur);
-			vTaskDelay(pdMS_TO_TICKS(5 * 60  * 1000));
+			//vTaskDelay(pdMS_TO_TICKS(5 * 60  * 1000));
+			vTaskDelay(pdMS_TO_TICKS(1 * 60  * 1000));
 		} else {
 			ESP_LOGE(TAG, "❌ Kon temperatuur niet ophalen");
 			vTaskDelay(pdMS_TO_TICKS(10 * 1000));

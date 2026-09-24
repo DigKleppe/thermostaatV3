@@ -24,8 +24,11 @@
 
 static const char *TAG = "httpsReadFile";
 
-extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+//extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+//extern const char server_root_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+
+
+extern TaskHandle_t httpTaskh;
 
 QueueHandle_t httpsReqMssgBox;
 QueueHandle_t httpsReqRdyMssgBox;
@@ -241,5 +244,6 @@ void httpsGetRequestTask(void *pvparameters) {
 	httpsReadFile(httpsRegParams);
 
 	ESP_LOGI(TAG, "Finish https_request task");
+	httpTaskh = NULL;
 	vTaskDelete(NULL);
 }

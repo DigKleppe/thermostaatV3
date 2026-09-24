@@ -96,6 +96,8 @@ TaskHandle_t autocalTaskh;
 TaskHandle_t KNMItaskh;
 TaskHandle_t udpTaskh;
 TaskHandle_t clockTaskh;
+TaskHandle_t httpTaskh;
+
 
 void sensirionTask(void *pvParameter);
 
@@ -279,6 +281,9 @@ void app_main(void) {
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
 			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
 			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
+			if ( httpTaskh != NULL) {
+				ESP_LOGI(TAG, "wm httpTaskh %d", uxTaskGetStackHighWaterMark(httpTaskh));
+			}
 
 #ifdef USE_OTA
 			if (updateTaskh != NULL) {
