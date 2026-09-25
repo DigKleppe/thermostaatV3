@@ -67,7 +67,7 @@ const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTimeHrs},
-								{"KNMIfouten:" ,"%d" , &knmiErrs},
+							//	{"KNMIfouten:" ,"%d" , &knmiErrs},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {

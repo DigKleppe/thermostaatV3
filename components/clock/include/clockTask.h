@@ -13,6 +13,7 @@
 
 extern struct tm timeinfo;
 extern volatile bool timeIsSet;
+extern volatile uint32_t minuteCntr;
 void clockTask(void *pvParameter);
 
 

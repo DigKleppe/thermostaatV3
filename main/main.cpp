@@ -100,7 +100,6 @@ TaskHandle_t udpTaskh;
 TaskHandle_t clockTaskh;
 TaskHandle_t httpTaskh;
 
-
 void sensirionTask(void *pvParameter);
 
 uint32_t upTime, upTimeHrs;
@@ -111,11 +110,9 @@ uint32_t timeStamp = 1;
 extern "C" {
 #endif
 //#define NODISPLAY
+#define PRINTSTACK
 
-void esp_task_wdt_isr_user_handler(void) {
-	esp_restart();
-}
-
+void esp_task_wdt_isr_user_handler(void) { esp_restart(); }
 
 #define MAXBL 50
 #define MINBL 12
@@ -184,41 +181,24 @@ void app_main(void) {
 
 	wifiConnect();
 
-	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh);  // wait 5 seconds for time 
-	// do {
-	// 	vTaskDelay( 1000/portTICK_PERIOD_MS);
-	// 	waitsForTime--;
-	// } while ( !timeIsSet && waitsForTime >0 ); // much faster is LCD not on ????
-
+	xTaskCreate(clockTask, "clock", 2 * 1024, NULL, 0, &clockTaskh); // wait 5 seconds for time
 
 	board_i2c_recover();
-
-	#ifndef NODISPLAY
+#ifndef NODISPLAY
 	display = bsp_display_start();
 	bsp_display_rotate(display, LV_DISPLAY_ROTATION_180);
 	bsp_display_lock(0);
-
 	xTaskCreatePinnedToCore(guiTask, "guiTask", 4 * 1024, NULL, 2, &guiTaskh, 1);
 	vTaskDelay(100);
-	#endif
+	setBacklight(userSettings.backLight);
+	bsp_display_unlock();
+
+#endif
 
 	xTaskCreate(sensirionTask, "sensirionTask", 3 * 1024, NULL, 0, &SensirionTaskh);
 	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
 	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
-
-	// while(1) {
-	// 	//     uint32_t free_heap_size=0, min_free_heap_size=0;
-	//     // free_heap_size = esp_get_free_heap_size();
-	//     // min_free_heap_size = esp_get_minimum_free_heap_size();
-	//     // printf("\n free heap size = %d \t  min_free_heap_size = %d \n",free_heap_size,min_free_heap_size);
-	// 	vTaskDelay(1000);
-	// }
-
-	#ifndef NODISPLAY
-	setBacklight(userSettings.backLight);
-	bsp_display_unlock();
-	#endif
 
 	while (1) {
 		vTaskDelay(200 / portTICK_PERIOD_MS);
@@ -228,17 +208,17 @@ void app_main(void) {
 		if (lastSecond != timeinfo.tm_sec) {
 			lastSecond = timeinfo.tm_sec; // every second
 			timeStamp++;
-			upTime++;
-			upTimeHrs = upTime / 3600;
 			if (timeStamp == 0)
 				timeStamp++;
+			upTime++;
+			upTimeHrs = upTime / 3600;
 		}
 
 		if (settingsChanged) {
 			minuteCntr = 60;
-			#ifndef NODISPLAY
+#ifndef NODISPLAY
 			setBacklight(userSettings.backLight);
-			#endif
+#endif
 
 			settingsChanged = false;
 		}
@@ -271,22 +251,22 @@ void app_main(void) {
 		}
 		if (displayMssgBox)
 			xQueueSend(displayMssgBox, &displayMssg, DISPLAYPROCESTTIME);
-
+#ifdef PRINTSTACK
 		if (presc-- <= 0) {
 			presc = 20;
 			minHeapSize = xPortGetMinimumEverFreeHeapSize();
 
-			ESP_LOGI(TAG, "freeHeapSize %d  minEver: %d", xPortGetFreeHeapSize() , minHeapSize);
+			ESP_LOGI(TAG, "freeHeapSize %d  minEver: %d", xPortGetFreeHeapSize(), minHeapSize);
 
 			// ESP_LOGI(TAG, "wm guiTaskh %d", uxTaskGetStackHighWaterMark(guiTaskh));
 			// ESP_LOGI(TAG, "wm clockT %d", uxTaskGetStackHighWaterMark(clockTaskh));
-			//ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
+			// ESP_LOGI(TAG, "wm SensirionTaskh %d", uxTaskGetStackHighWaterMark(SensirionTaskh));
 			// ESP_LOGI(TAG, "wm autocalTaskh %d", uxTaskGetStackHighWaterMark(autocalTaskh));
 			// ESP_LOGI(TAG, "wm udpTaskh %d", uxTaskGetStackHighWaterMark(udpTaskh));
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
 			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
 			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
-			if ( httpTaskh != NULL) {
+			if (httpTaskh != NULL) {
 				ESP_LOGI(TAG, "wm httpTaskh %d", uxTaskGetStackHighWaterMark(httpTaskh));
 			}
 
@@ -301,6 +281,7 @@ void app_main(void) {
 			}
 #endif
 		}
+#endif
 
 		// printf("freeHeapSize MALLOC_CAP_DMA:\n");
 		// heap_caps_print_heap_info(MALLOC_CAP_DMA);

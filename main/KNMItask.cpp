@@ -20,11 +20,15 @@
 
 // extern const char server_root_cert_pem_start[] asm("_binary_ca_cert_pem_start");
 
+
+
 extern volatile bool hpptActive;
 extern TaskHandle_t httpTaskh;
 
 // --- KNMI API gegevens ---
 // #define API_KEY in passwords.pwd
+
+#define REQUESTINTERVAL 5 // minutes 
 
 #define LOCATION_ID "0-20000-0-06323" // Wilhelminadorp
 #define COLLECTION "10-minute-in-situ-meteorological-observations"
@@ -36,8 +40,8 @@ static const char *TAG = "KNMItask";
 float buitenTemperatuur = ERROR_TEMPERATURE;
 int knmiErrs;
 
-// #define SAMPLEPERIOD 10
-// #define FIRSTSAMPLEOFFSET (60 + SAMPLEPERIOD) // wintertijd GMT
+#define TIMEOUT	10	// minutes to erase 
+
 
 #define SAMPLEPERIOD 15
 #define FIRSTSAMPLEOFFSET (60 + SAMPLEPERIOD) // wintertijd GMT
@@ -147,6 +151,8 @@ static float get_temperature(void) {
 }
 
 void KNMItask(void *parameters) {
+	int timeOut = 0;
+	float tempTemperature;
 
 	while (!timeIsSet)
 		vTaskDelay(pdMS_TO_TICKS(1000));
@@ -160,17 +166,23 @@ void KNMItask(void *parameters) {
 
 		hpptActive = true; // sorry
 		ESP_LOGI(TAG, "semaphore taken");
-		buitenTemperatuur = get_temperature();
+		
+		tempTemperature  = get_temperature();
+	
 		//	xSemaphoreGive(hpptReqSemphore);
 
 		hpptActive = false; // sorry
-		if (buitenTemperatuur != -999.0) {
-			ESP_LOGI(TAG, "🌡️ Temperatuur in Wilhelminadorp: %.1f °C", buitenTemperatuur);
-			//vTaskDelay(pdMS_TO_TICKS(5 * 60  * 1000));
-			vTaskDelay(pdMS_TO_TICKS(1 * 60  * 1000));
+		if (tempTemperature != -999.0) {
+			ESP_LOGI(TAG, "🌡️ Temperatuur in Wilhelminadorp: %.1f °C", tempTemperature);
+			timeOut = minuteCntr; // from clockTask
+			buitenTemperatuur = tempTemperature;
+			vTaskDelay(pdMS_TO_TICKS( REQUESTINTERVAL * 60  * 1000));
 		} else {
 			ESP_LOGE(TAG, "❌ Kon temperatuur niet ophalen");
 			knmiErrs++;
+			if ( minuteCntr > (timeOut + TIMEOUT) )
+				buitenTemperatuur = -999.0; 
+
 			vTaskDelay(pdMS_TO_TICKS(10 * 1000));
 		}
 			
