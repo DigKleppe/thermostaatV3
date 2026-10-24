@@ -40,6 +40,7 @@ static const char *TAG = "KNMItask";
 float buitenTemperatuur = ERROR_TEMPERATURE;
 int knmiErrs;
 
+#define HTTPREQTIMEOUT	60 // seconds
 #define TIMEOUT	10	// minutes to erase 
 
 
@@ -83,7 +84,7 @@ static float get_temperature(void) {
 	memset((uint8_t *)&config, 0, sizeof(config));
 	config.url = url;
 	config.method = HTTP_METHOD_GET;
-	config.timeout_ms = 20000;
+	config.timeout_ms = HTTPREQTIMEOUT * 1000;
 	config.cert_pem = NULL;						// NULL betekent: gebruik de ingebouwde certificatenbundel
 	config.skip_cert_common_name_check = false; // CN validatie inschakelen
 	config.keep_alive_enable = false;
@@ -116,7 +117,7 @@ static float get_temperature(void) {
 	do {
 		//xQueueSend(httpsReqRdyMssgBox, &mssg, 0);
 		mssg.len = 0;
-		if (xQueueReceive(httpsReqMssgBox, (void *)&mssg, (15000 / portTICK_PERIOD_MS))) {
+		if (xQueueReceive(httpsReqMssgBox, (void *)&mssg, ((HTTPREQTIMEOUT +10) * 1000  / portTICK_PERIOD_MS))) {
 			if (mssg.len) {
 				readBuffer[mssg.len] = 0;
 				ESP_LOGI(TAG, "%d %s", mssg.len, readBuffer);

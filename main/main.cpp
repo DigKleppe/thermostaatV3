@@ -8,8 +8,9 @@
 #include "esp_log.h"
 #include "esp_memory_utils.h"
 #include "esp_rom_sys.h"
+#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
-// #include "freertos/semphr.h"
+
 #include "autoCalTask.h"
 #include "freertos/task.h"
 #include "guiTask.h"
@@ -28,6 +29,9 @@
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
+
+extern uint32_t LVGLcheckCntr; // esp_lvgl_port_disp.c
+#define LVGLTIMEOUT 5 * 60	   // seconds
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,13 +107,14 @@ TaskHandle_t httpTaskh;
 void sensirionTask(void *pvParameter);
 
 uint32_t upTime, upTimeHrs;
+int resetReason;
 
 uint32_t timeStamp = 1;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#define NODISPLAY
+// #define NODISPLAY
 #define PRINTSTACK
 
 void esp_task_wdt_isr_user_handler(void) { esp_restart(); }
@@ -122,6 +127,12 @@ void setBacklight(int value) { // 5-100
 	ESP_LOGI(TAG, "BL %f", perc);
 	bsp_display_brightness_set((int)perc);
 }
+
+// void lv_display_set_flush_cb(lv_display_t *disp, lv_display_flush_cb_t flush_cb);
+// void flush_cb (lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+// 	LVGLcheckCntr++
+// }
+
 #endif
 void app_main(void) {
 	esp_err_t err;
@@ -134,6 +145,10 @@ void app_main(void) {
 	struct tm timeinfo;
 	int lastSecond = -1;
 	lv_display_t *display;
+	uint32_t lastLVGLcheckCntr;
+	int LVGLtimeOut = LVGLTIMEOUT;
+	resetReason = (int)esp_reset_reason();
+
 	i2c_master_bus_init(); // second port for SCD30 todo make class
 
 	gpio_set_direction(RS485DE_PIN, GPIO_MODE_OUTPUT); // outputs to optocoupler
@@ -212,6 +227,17 @@ void app_main(void) {
 				timeStamp++;
 			upTime++;
 			upTimeHrs = upTime / 3600;
+			if (LVGLcheckCntr != lastLVGLcheckCntr) {
+				lastLVGLcheckCntr = LVGLcheckCntr;
+				LVGLtimeOut = LVGLTIMEOUT;
+			} else {
+				if (LVGLtimeOut > 0)
+					LVGLtimeOut--;
+				else {
+					esp_restart();
+				}
+			}
+		//	ESP_LOGI(TAG,"LVGLcheckCntr: %u" , LVGLcheckCntr);
 		}
 
 		if (settingsChanged) {
@@ -270,16 +296,16 @@ void app_main(void) {
 				ESP_LOGI(TAG, "wm httpTaskh %d", uxTaskGetStackHighWaterMark(httpTaskh));
 			}
 
-#ifdef USE_OTA
-			if (updateTaskh != NULL) {
-				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
-				if (updateFWTaskh != NULL)
-					ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
+			// #ifdef USE_OTA
+			// 			if (updateTaskh != NULL) {
+			// 				ESP_LOGI(TAG, "wm updateTaskh %d", uxTaskGetStackHighWaterMark(updateTaskh));
+			// 				if (updateFWTaskh != NULL)
+			// 					ESP_LOGI(TAG, "wm updateFWTaskh %d", uxTaskGetStackHighWaterMark(updateFWTaskh));
 
-				if (updateSPIFFSTaskh != NULL)
-					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
-			}
-#endif
+			// 				if (updateSPIFFSTaskh != NULL)
+			// 					ESP_LOGI(TAG, "wm updateSPIFFSTaskh %d", uxTaskGetStackHighWaterMark(updateSPIFFSTaskh));
+			// 			}
+			// #endif
 		}
 #endif
 

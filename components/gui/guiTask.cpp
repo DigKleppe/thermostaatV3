@@ -48,10 +48,12 @@ extern uint32_t upTimeHrs;
 extern int rssi;
 extern int minHeapSize;
 extern int knmiErrs;
+extern int resetReason;
 
 #define NRSCREENS 5
-
 #define SCREENTIME (15 * 1000 / portTICK_PERIOD_MS)
+#define TIMEOUT (3*60*1000/portTICK_PERIOD_MS)
+
 
 TimerHandle_t screenTimer;
 
@@ -67,7 +69,7 @@ const infoDescr_t infoDesc[] = {{"Netwerk:", "%s", wifiSettings.SSID},
 								{"PID:", "%2.2f", &PIDsetting},
 								{"Signaal:", "%d", &rssi},
 								{"Optijd:", "%d", &upTimeHrs},
-							//	{"KNMIfouten:" ,"%d" , &knmiErrs},
+								{"ResetOorzaak:" ,"%d" , &resetReason},
 								{NULL, NULL, NULL}};
 
 void showScreen(int idx) {
@@ -140,7 +142,7 @@ void guiTask(void *pvParameter) {
 	showScreen(0);
 
 	while (1) {
-		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, portMAX_DELAY) == pdTRUE) {
+		if (xQueueReceive(displayMssgBox, &recDdisplayMssg, TIMEOUT) == pdTRUE) {
 			xLastWakeTime = xTaskGetTickCount();
 			switch (recDdisplayMssg.displayItem) {
 			case DISPLAY_ITEM_STATUSLINE:
@@ -168,6 +170,9 @@ void guiTask(void *pvParameter) {
 				break;
 			}
 		}
+		else 
+			esp_restart();
+
 		xTaskDelayUntil(&xLastWakeTime, DISPLAYPROCESTTIME - (110 / portTICK_PERIOD_MS));
 	}
 }
