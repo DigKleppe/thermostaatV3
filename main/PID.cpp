@@ -201,5 +201,6 @@ void updatePID(float temperature) {
 
 	ESP_LOGI(TAG, "PWM: %1.1f \n", result);
 	PIDsetting = result;
+	PWMpercent = result;
 	//PWMpercent =  ( int) temperature;   //result;
 }
