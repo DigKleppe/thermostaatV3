@@ -15,16 +15,19 @@
 #include "freertos/task.h"
 
 #define TAG "PID"
-#define PWMINTERVAL 10 // ms 
-#define MINIMUM_ON_TIME 120 // ms
+#define PWMINTERVAL 1000 // ms 
+
 #define HEATINGONLEVEL 1
-#define DIFFTIME 60 // calls to updatePID( 1 min )
+#define DIFFTIME  60 // calls to updatePID( 1 min )
 
 float diffBuffer[DIFFTIME]; // for PI d
 int diffbufIDX;
 int nrValuesInDiffbuf;
 
 float PIDsetting; // for cgi
+float PIDdiff;
+
+
 thermostatStatus_t thermostatStatus;
 
 int PWMpercent;
@@ -67,7 +70,7 @@ void PWMTask(void * p) {
 
 	while (1) {
 		vTaskDelay(PWMINTERVAL);
-
+	
 		if (PWMpercent < 0) { // cooling?
 			if (userSettings.coolingOn) {
 				heatingActive = false;
@@ -89,7 +92,7 @@ void PWMTask(void * p) {
 			offTimer = 0;
 			onTimer = 0;
 			if (PWMpercent > 1) {
-				onTimer = MINIMUM_ON_TIME / PWMINTERVAL;
+				onTimer = PWMpercent;  
 				state++;
 				if (heatingActive)
 					heatingOn();
@@ -110,7 +113,7 @@ void PWMTask(void * p) {
 				onTimer--;
 				if (onTimer <= 0) {
 					if (PWMpercent < 99) {
-						offTimer = (100 - PWMpercent) / PWMINTERVAL;
+						offTimer = (100 - PWMpercent);
 						state++;
 					} else
 						onTimer = 1; // keep in this state at 100%
@@ -121,7 +124,7 @@ void PWMTask(void * p) {
 		case 2: // off timer active
 			bothOff();
 			if (PWMpercent > lastPWMpercent) { // react quick on higher demand
-				int newOffTimer = (100 - PWMpercent) / PWMINTERVAL;
+				int newOffTimer = (100 - PWMpercent);
 				if (newOffTimer < offTimer)
 					offTimer = newOffTimer;
 			}
@@ -130,7 +133,8 @@ void PWMTask(void * p) {
 			offTimer--;
 			if (offTimer <= 0) {
 				state = 1;
-				onTimer = MINIMUM_ON_TIME / PWMINTERVAL;
+			lastPWMpercent = PWMpercent;
+				onTimer =PWMpercent; 
 				break;
 			}
 		}
@@ -182,8 +186,9 @@ void updatePID(float temperature) {
 			nrValuesInDiffbuf++;
 		else {
 			diffTemperature = diffBuffer[diffbufIDX] - temperature;
-			result -= diffTemperature * userSettings.PIDd;
-			ESP_LOGI(TAG, "D: %1.1f \n", diffTemperature * userSettings.PIDd);
+			PIDdiff = diffTemperature * userSettings.PIDd;
+			ESP_LOGI(TAG, "D: %1.1f \n", PIDdiff);
+			result -= PIDdiff;
 		}
 	} else
 		nrValuesInDiffbuf = 0;
@@ -196,5 +201,5 @@ void updatePID(float temperature) {
 
 	ESP_LOGI(TAG, "PWM: %1.1f \n", result);
 	PIDsetting = result;
-	PWMpercent = result;
+	//PWMpercent =  ( int) temperature;   //result;
 }

@@ -25,14 +25,15 @@
 #include "PID.h"
 
 
-#define NODISPLAY
-// #define PRINTSTACK
 #ifdef USE_OTA
 #include "updateTask.h"
 #endif
 
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
+
+//#define NODISPLAY
+// #define PRINTSTACK
 
 extern uint32_t LVGLcheckCntr; // esp_lvgl_port_disp.c
 #define LVGLTIMEOUT 5 * 60	   // seconds

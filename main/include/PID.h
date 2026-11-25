@@ -21,6 +21,8 @@
 
 void updatePID ( float temperature);
 extern float PIDsetting; // for cgi
+extern float PIDdiff; // for cgi
+
 void PWMTask(void * p);
 
 typedef enum { THERMOSTATOFF, HEATING_ON, COOLING_ON } thermostatStatus_t;

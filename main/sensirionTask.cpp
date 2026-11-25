@@ -365,7 +365,8 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		scriptState++;
 		len = sprintf(pBuffer, "%s,%1.2f\n", "Temperatuur offset", userSettings.temperatureOffset);
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "RH offset", userSettings.RHoffset);
-		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PWM", PIDsetting);
+		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PID", PIDsetting);
+		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PIDdiff", PIDdiff);
 		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
 #ifdef USE_OTA
 		len += sprintf(pBuffer + len, "%s,%s\n", "Firmwareversie", wifiSettings.firmwareVersion);
