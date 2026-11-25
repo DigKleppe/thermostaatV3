@@ -22,7 +22,11 @@
 #include "sensirionTask.h"
 #include "settings.h"
 #include "wifiConnect.h"
+#include "PID.h"
 
+
+#define NODISPLAY
+// #define PRINTSTACK
 #ifdef USE_OTA
 #include "updateTask.h"
 #endif
@@ -103,6 +107,7 @@ TaskHandle_t KNMItaskh;
 TaskHandle_t udpTaskh;
 TaskHandle_t clockTaskh;
 TaskHandle_t httpTaskh;
+TaskHandle_t PWMTaskh;
 
 void sensirionTask(void *pvParameter);
 
@@ -114,8 +119,7 @@ uint32_t timeStamp = 1;
 #ifdef __cplusplus
 extern "C" {
 #endif
-// #define NODISPLAY
-#define PRINTSTACK
+
 
 void esp_task_wdt_isr_user_handler(void) { esp_restart(); }
 
@@ -214,7 +218,8 @@ void app_main(void) {
 	xTaskCreate(autoCalTask, "autoCalTask", 3 * 1024, NULL, 0, &autocalTaskh);
 	xTaskCreate(updTransmitTask, "udptx", 2 * 1024, NULL, 0, &udpTaskh);
 	xTaskCreate(KNMItask, "KMNItask", 3 * 1024, NULL, 0, &KNMItaskh);
-
+	xTaskCreate(PWMTask, "PWMTask", 2 * 1024, NULL, 0, &PWMTaskh);
+	
 	while (1) {
 		vTaskDelay(200 / portTICK_PERIOD_MS);
 		rssi = getRssi();
@@ -292,9 +297,9 @@ void app_main(void) {
 			// ESP_LOGI(TAG, "wm KNMItaskh %d", uxTaskGetStackHighWaterMark(KNMItaskh));
 			// ESP_LOGI(TAG, "wm connectTaskh %d", uxTaskGetStackHighWaterMark(connectTaskh));
 			// ESP_LOGI(TAG, "wm udpServerTaskh %d", uxTaskGetStackHighWaterMark(udpServerTaskh));
-			if (httpTaskh != NULL) {
-				ESP_LOGI(TAG, "wm httpTaskh %d", uxTaskGetStackHighWaterMark(httpTaskh));
-			}
+			// if (httpTaskh != NULL) {
+			// 	ESP_LOGI(TAG, "wm httpTaskh %d", uxTaskGetStackHighWaterMark(httpTaskh));
+			// }
 
 			// #ifdef USE_OTA
 			// 			if (updateTaskh != NULL) {

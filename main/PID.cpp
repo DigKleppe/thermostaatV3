@@ -5,27 +5,36 @@
  *      Author: dig
  */
 
-#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
+//#define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 
 #include "PID.h"
 #include "esp_log.h"
 #include "sensirionTask.h"
 #include "settings.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #define TAG "PID"
-
-#define MINIMUM_ON_TIME 120 // seconds
+#define PWMINTERVAL 10 // ms 
+#define MINIMUM_ON_TIME 120 // ms
 #define HEATINGONLEVEL 1
+#define DIFFTIME 60 // calls to updatePID( 1 min )
+
+float diffBuffer[DIFFTIME]; // for PI d
+int diffbufIDX;
+int nrValuesInDiffbuf;
 
 float PIDsetting; // for cgi
 thermostatStatus_t thermostatStatus;
+
+int PWMpercent;
 
 void heatingOn() {
 	if (userSettings.heatingOn) {
 		gpio_set_level(RS485DE_PIN, 1);
 		gpio_set_level(RS485TX_PIN, HEATINGONLEVEL);
 
-		ESP_LOGI(TAG, "Heating ON");
+	//	ESP_LOGI(TAG, "Heating ON");
 
 		thermostatStatus = HEATING_ON;
 	} else
@@ -37,7 +46,7 @@ void coolingOn() {
 		gpio_set_level(RS485DE_PIN, 1);
 		gpio_set_level(RS485TX_PIN, !HEATINGONLEVEL);
 		thermostatStatus = COOLING_ON;
-		ESP_LOGI(TAG, "Cooling  ON");
+	//	ESP_LOGI(TAG, "Cooling  ON");
 	} else
 		thermostatStatus = THERMOSTATOFF;
 }
@@ -45,93 +54,95 @@ void coolingOn() {
 void bothOff(void) {
 	gpio_set_level(RS485DE_PIN, 0);
 	thermostatStatus = THERMOSTATOFF;
-	ESP_LOGI(TAG, "off");
+//	ESP_LOGI(TAG, "off");
 }
 
-// called from sensirionTask every MEASINTERVAL seconds
 
-void setPWM(int perc) {
+void PWMTask(void * p) {
 	static int onTimer;
 	static int offTimer;
-	static int lastPerc = 999;
+	static int lastPWMpercent = 999;
 	static int state = 0;
 	bool heatingActive = true;
 
-	if (perc < 0) {  // cooling?
-		if (userSettings.coolingOn) {
-			heatingActive = false;
-			perc = -1 * perc;
-		}
-		else { // switched off 
-			perc = 0; // off 
-			state = 0;
-		}
-	}
-	else {
-		if (!userSettings.heatingOn) {  
-			perc = 0; // off 
-			state = 0;
-		}
-	}
+	while (1) {
+		vTaskDelay(PWMINTERVAL);
 
-	switch (state) {
-	case 0: // inactove
-		bothOff();
-		offTimer = 0;
-		onTimer = 0;
-		if (perc > 1) {
-			onTimer = MINIMUM_ON_TIME / MEASINTERVAL;
-			state++;
+		if (PWMpercent < 0) { // cooling?
+			if (userSettings.coolingOn) {
+				heatingActive = false;
+				PWMpercent = -1 * PWMpercent;
+			} else {	  // switched off
+				PWMpercent = 0; // off
+				state = 0;
+			}
+		} else {
+			if (!userSettings.heatingOn) {
+				PWMpercent = 0; // off
+				state = 0;
+			}
+		}
+
+		switch (state) {
+		case 0: // inactove
+			bothOff();
+			offTimer = 0;
+			onTimer = 0;
+			if (PWMpercent > 1) {
+				onTimer = MINIMUM_ON_TIME / PWMINTERVAL;
+				state++;
+				if (heatingActive)
+					heatingOn();
+				else
+					coolingOn();
+			}
+			break;
+
+		case 1:
 			if (heatingActive)
 				heatingOn();
 			else
 				coolingOn();
-		}
-		break;
 
-	case 1:
-		if (heatingActive)
-			heatingOn();
-		else
-			coolingOn();
+			if (PWMpercent < 1)
+				state = 0;
+			else {
+				onTimer--;
+				if (onTimer <= 0) {
+					if (PWMpercent < 99) {
+						offTimer = (100 - PWMpercent) / PWMINTERVAL;
+						state++;
+					} else
+						onTimer = 1; // keep in this state at 100%
+				}
+			}
+			break;
 
-		if (perc < 1)
-			state = 0;
-		else {
-			onTimer--;
-			if (onTimer <= 0) {
-				if (perc < 99) {
-					offTimer = (100 - perc) / MEASINTERVAL;
-					state++;
-				} else
-					onTimer = 1; // keep in this state at 100%
+		case 2: // off timer active
+			bothOff();
+			if (PWMpercent > lastPWMpercent) { // react quick on higher demand
+				int newOffTimer = (100 - PWMpercent) / PWMINTERVAL;
+				if (newOffTimer < offTimer)
+					offTimer = newOffTimer;
+			}
+			lastPWMpercent = PWMpercent;
+
+			offTimer--;
+			if (offTimer <= 0) {
+				state = 1;
+				onTimer = MINIMUM_ON_TIME / PWMINTERVAL;
+				break;
 			}
 		}
-		break;
-
-	case 2: // off timer active
-		bothOff();
-		if (perc > lastPerc) { // react quick on higher demand
-			int newOffTimer = (100 - perc) / MEASINTERVAL;
-			if (newOffTimer < offTimer)
-				offTimer = newOffTimer;
-		}
-		lastPerc = perc;
-
-		offTimer--;
-		if (offTimer <= 0) {
-			state = 1;
-			onTimer = MINIMUM_ON_TIME / MEASINTERVAL;
-			break;
-		}
+		//ESP_LOGI(TAG, "OnTmr: %d  OffTmr:%d State:%d", onTimer, offTimer, state);
 	}
-	ESP_LOGI(TAG, "OnTmr: %d  OffTmr:%d State:%d", onTimer, offTimer, state);
 }
 
 void updatePID(float temperature) {
 
 	float delta;
 	float result;
+	float diffTemperature; // for diff
 	static float iSum = 0;
 
 	delta = userSettings.temperatureSetpoint - temperature;
@@ -162,6 +173,21 @@ void updatePID(float temperature) {
 
 	result += iSum;
 
+	if (userSettings.heatingOn) {
+		diffBuffer[diffbufIDX++] = temperature;
+		if (diffbufIDX >= DIFFTIME)
+			diffbufIDX = 0;
+
+		if (nrValuesInDiffbuf < DIFFTIME)
+			nrValuesInDiffbuf++;
+		else {
+			diffTemperature = diffBuffer[diffbufIDX] - temperature;
+			result -= diffTemperature * userSettings.PIDd;
+			ESP_LOGI(TAG, "D: %1.1f \n", diffTemperature * userSettings.PIDd);
+		}
+	} else
+		nrValuesInDiffbuf = 0;
+
 	if (result > 100)
 		result = 100;
 
@@ -170,5 +196,5 @@ void updatePID(float temperature) {
 
 	ESP_LOGI(TAG, "PWM: %1.1f \n", result);
 	PIDsetting = result;
-	setPWM(result);
+	PWMpercent = result;
 }

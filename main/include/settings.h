@@ -17,10 +17,11 @@
 
 
 #define MAX_STRLEN 32
-#define USERSETTINGS_CHECKSTR 	"test4"
-#define CALCHECKSTR  			"test2"
-#define ADVUSERSETTINGS_CHECKSTR "test3"
-#define SYSTEMINFO_CHECKSTR "test"
+#define OLDUSERSETTINGS_CHECKSTR	"test4"
+#define USERSETTINGS_CHECKSTR 		"testNew4"
+#define CALCHECKSTR  				"test2"
+#define ADVUSERSETTINGS_CHECKSTR 	"test3"
+#define SYSTEMINFO_CHECKSTR			"test"
 
 
 typedef struct {
@@ -30,6 +31,23 @@ typedef struct {
 	float RHoffset;
 	float PIDp;
 	float PIDi;
+	float PIDmaxi;
+	float controlInterval;
+	bool heatingOn;
+	bool coolingOn;
+	bool isCalibrated;
+	float backLight;
+	char checkstr[MAX_STRLEN+1];
+}oldUserSettings_t;    // up to sw 1.34
+
+typedef struct {
+	char moduleName[MAX_STRLEN+1];
+	float temperatureSetpoint;
+	float temperatureOffset;
+	float RHoffset;
+	float PIDp;
+	float PIDi;
+	float PIDd;
 	float PIDmaxi;
 	float controlInterval;
 	bool heatingOn;
@@ -74,7 +92,9 @@ esp_err_t loadSettings( void);
 void setUserDefaults(void);
 void setAdvDefaults(void);
 
+extern oldUserSettings_t oldUserSettings;
 extern userSettings_t userSettings;
+
 extern advancedSettings_t advSettings;
 extern systemInfo_t systemInfo;
 

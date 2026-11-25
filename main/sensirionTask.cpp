@@ -5,7 +5,7 @@
  *      Author: dig
  */
 
-// #define LOG_LOCAL_LEVEL ESP_LOG_NONE
+#define LOG_LOCAL_LEVEL ESP_LOG_NONE
 // #define LOG_LOCAL_LEVEL ESP_LOG_ERROR
 
 #include "esp_log.h"
@@ -234,7 +234,7 @@ void sensirionTask(void *pvParameter) {
 				skipFirstReadings--;
 				lastVal.co2 = 9999;
 			}
-			updatePID(lastVal.temperature - userSettings.temperatureOffset);
+		//	updatePID(lastVal.temperature - userSettings.temperatureOffset);
 			for (int n = 0; n < NR_SENSORVALUES; n++) {
 				displayMssg.line = n;
 				displayMssg.str1 = displayStr[n];
@@ -285,6 +285,9 @@ void sensirionTask(void *pvParameter) {
 				avgVal.hum = humAverager.average() / 1000.0;
 				avgVal.timeStamp = timeStamp;
 				addToLog(avgVal);			  // add to cyclic log buffer
+				
+				updatePID(avgVal.temperature - userSettings.temperatureOffset);
+
 				lastminute = timeinfo.tm_min; // every minute
 				if (userSettings.isCalibrated && (avgVal.co2 < 400)) {
 					if (co2autoCalTimer > 0)
