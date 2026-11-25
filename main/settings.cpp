@@ -31,10 +31,11 @@ const userSettings_t userSettingsDefaults = {{"Thermostaat"},
 											 21.0, // temperatureSetpoint
 											 4.4,	// temperatureOffset
 											 0.0,	// RHoffset
-											 5,		// PIDp
-											 0.1,	// PIDi
-											 10,	// PIDd
-											 20,	// PIDmaxi
+											 100,	// PIDp
+											 10,	// PIDi
+											 30,	// PIDd
+											 40,	// PIDmaxi
+											 30, 	// PID dtime	
 											 15,	// controlInterval
 											 true,	// heatingOn
 											 true,	// coolingOn

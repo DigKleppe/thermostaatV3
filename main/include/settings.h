@@ -49,6 +49,7 @@ typedef struct {
 	float PIDi;
 	float PIDd;
 	float PIDmaxi;
+	int PIDdTime;
 	float controlInterval;
 	bool heatingOn;
 	bool coolingOn;
