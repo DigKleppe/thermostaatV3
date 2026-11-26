@@ -36,7 +36,7 @@ const userSettings_t userSettingsDefaults = {{"Thermostaat"},
 											 30,	// PIDd
 											 40,	// PIDmaxi
 											 30, 	// PID dtime	
-											 15,	// controlInterval
+											 30,	// PWMstartVal
 											 true,	// heatingOn
 											 true,	// coolingOn
 											 false, // isCalibrated
@@ -104,7 +104,7 @@ esp_err_t loadSettings() {
 					else { // copy old usersettings to new usersettings
 						ESP_LOGI(TAG, "New settings loaded from old settings");
 						userSettings.backLight = oldUserSettings.backLight;
-						userSettings.controlInterval = oldUserSettings.controlInterval;
+						userSettings.PWMstartVal = userSettingsDefaults.PWMstartVal;
 						userSettings.coolingOn = oldUserSettings.coolingOn;
 						userSettings.heatingOn = oldUserSettings.heatingOn;
 						userSettings.isCalibrated = oldUserSettings.isCalibrated;

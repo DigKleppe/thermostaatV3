@@ -50,7 +50,7 @@ typedef struct {
 	float PIDd;
 	float PIDmaxi;
 	int PIDdTime;
-	float controlInterval;
+	int PWMstartVal;
 	bool heatingOn;
 	bool coolingOn;
 	bool isCalibrated;

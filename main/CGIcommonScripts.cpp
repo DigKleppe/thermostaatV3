@@ -37,6 +37,7 @@ const CGIdesc_t advancedWriteVarDescriptorTable[] = {
 	{"PID D", &userSettings.PIDd, FLT, 1},
 	{"PID max I", &userSettings.PIDmaxi, FLT, 1},
 	{"PID dTime", &userSettings.PIDdTime, INT, 1},
+	{"PWM startwaarde", &userSettings.PWMstartVal, INT, 1},
 	{"Laaste IPdigit",&advSettings.fixedIPdigit, INT, 1}, 
 	{NULL, NULL, INT, 1},
 };

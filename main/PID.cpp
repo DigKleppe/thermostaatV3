@@ -15,7 +15,7 @@
 #include "settings.h"
 
 #define TAG "PID"
-#define PWMINTERVAL 1000 // ms
+#define PWMINTERVAL 100 // ms
 
 #define HEATINGONLEVEL 1
 #define MAXdTime 100		// window for PID d
@@ -150,12 +150,15 @@ void updatePID(float temperature) {
 	delta = userSettings.temperatureSetpoint - temperature;
 	result = delta * userSettings.PIDp;
 	iSum += delta * userSettings.PIDi;
-	if (userSettings.heatingOn && (delta < 0)) // temperature above setpoint heating
-		iSum = 0;							   // zero i to avoid overshoot
-
-	// if ( userSettings.coolingOn && (delta > 0)) // temperature below setpoint cooling
-	// 	iSum = 0; // zero i to avoid overshoot
-
+	
+	if (userSettings.heatingOn) {
+		if (delta <= 0) // temperature above setpoint heating
+			iSum = 0;	 // zero i to avoid overshoot
+		else {
+			if (iSum < userSettings.PWMstartVal)
+				iSum = userSettings.PWMstartVal;
+		}
+	}
 	if (iSum > 0) {
 		if (iSum > userSettings.PIDmaxi) // limit to maxI
 			iSum = userSettings.PIDmaxi;
