@@ -146,18 +146,20 @@ void updatePID(float temperature) {
 	float diffTemperature; // for diff
 	static float iSum = 0;
 	static int dTime = userSettings.PIDdTime;
+	static bool wasOn = false;
 
 	delta = userSettings.temperatureSetpoint - temperature;
 	result = delta * userSettings.PIDp;
 	iSum += delta * userSettings.PIDi;
-	
+
 	if (userSettings.heatingOn) {
 		if (delta <= 0) // temperature above setpoint heating
-			iSum = 0;	 // zero i to avoid overshoot
-		else {
-			if (iSum < userSettings.PWMstartVal)
-				iSum = userSettings.PWMstartVal;
-		}
+			iSum = 0;	// zero i to avoid overshoot
+		wasOn = false;
+		// else {
+		// 	if (iSum < userSettings.PWMstartVal)
+		// 		iSum = userSettings.PWMstartVal;
+		// }
 	}
 	if (iSum > 0) {
 		if (iSum > userSettings.PIDmaxi) // limit to maxI
@@ -198,13 +200,20 @@ void updatePID(float temperature) {
 	if (nrValuesInDiffbuf < dTime)
 		nrValuesInDiffbuf++;
 	else {
-		diffTemperature = temperature - diffBuffer[diffbufIDX] ;
+		diffTemperature = temperature - diffBuffer[diffbufIDX];
 		PIDdiff = diffTemperature * userSettings.PIDd;
 		ESP_LOGI(TAG, "D: %1.1f \n", PIDdiff);
 		if (userSettings.heatingOn)
 			result -= PIDdiff;
 		else
 			result += PIDdiff;
+	}
+	if (userSettings.heatingOn) {
+		if (!wasOn && result > 0) {
+			wasOn = true;
+			iSum = userSettings.PWMstartVal;
+			result = userSettings.PWMstartVal;
+		}
 	}
 
 	if (result > 100)
