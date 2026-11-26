@@ -363,9 +363,9 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		return len;
 	case 1:
 		scriptState++;
-		len = sprintf(pBuffer, "%s,%1.2f\n", "Temperatuur offset", userSettings.temperatureOffset);
-		len += sprintf(pBuffer + len, "%s,%1.2f\n", "RH offset", userSettings.RHoffset);
-		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PID", PIDsetting);
+		len = sprintf(pBuffer, "%s,%1.1f\n", "Temperatuur offset", userSettings.temperatureOffset);
+		len += sprintf(pBuffer + len, "%s,%1.1f\n", "RH offset", userSettings.RHoffset);
+		len += sprintf(pBuffer + len, "%s,%1.1f\n", "PID", PIDsetting);
 		len += sprintf(pBuffer + len, "%s,%1.2f\n", "PIDdiff", PIDdiff);
 		len += sprintf(pBuffer + len, "%s,%d\n", "RSSI", rssi);
 #ifdef USE_OTA
@@ -379,7 +379,7 @@ int getInfoValuesScript(char *pBuffer, int count) {
 		// len = sprintf(pBuffer, "%s,%d\n", "timeouts", timeOuts);
 		// len += sprintf(pBuffer + len, "%s,%d\n", "retriestotal", retriestotal);
 		// len += sprintf(pBuffer + len, "%s,%d\n", "Sensor resets", resets);
-		len += sprintf(pBuffer + len, "%s,%lu\n", "timeStamp", (unsigned long)timeStamp);
+		len += sprintf(pBuffer + len, "%s,%lu\n", "Secondeteller", (unsigned long)timeStamp);
 		return len;
 		break;
 
