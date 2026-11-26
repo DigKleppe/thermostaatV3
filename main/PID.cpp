@@ -198,7 +198,7 @@ void updatePID(float temperature) {
 	if (nrValuesInDiffbuf < dTime)
 		nrValuesInDiffbuf++;
 	else {
-		diffTemperature = - temperature - diffBuffer[diffbufIDX] ;
+		diffTemperature = temperature - diffBuffer[diffbufIDX] ;
 		PIDdiff = diffTemperature * userSettings.PIDd;
 		ESP_LOGI(TAG, "D: %1.1f \n", PIDdiff);
 		if (userSettings.heatingOn)
