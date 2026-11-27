@@ -148,18 +148,15 @@ void updatePID(float temperature) {
 	static int dTime = userSettings.PIDdTime;
 	static bool wasOn = false;
 
-	delta = userSettings.temperatureSetpoint - temperature;
+	delta = userSettings.temperatureSetpoint-userSettings.setpointOffset - temperature;
 	result = delta * userSettings.PIDp;
 	iSum += delta * userSettings.PIDi;
 
 	if (userSettings.heatingOn) {
-		if (delta <= 0) // temperature above setpoint heating
-			iSum = 0;	// zero i to avoid overshoot
-		wasOn = false;
-		// else {
-		// 	if (iSum < userSettings.PWMstartVal)
-		// 		iSum = userSettings.PWMstartVal;
-		// }
+		if (delta <= 0) { // temperature above setpoint heating
+			iSum = 0;	  // zero i to avoid overshoot
+			wasOn = false;
+		}
 	}
 	if (iSum > 0) {
 		if (iSum > userSettings.PIDmaxi) // limit to maxI
@@ -176,7 +173,8 @@ void updatePID(float temperature) {
 		if (iSum < 0) // limit to zero if cooling is off
 			iSum = 0;
 	}
-	//	printf("\ndelta: %f P:%f I:%f ", delta, result, iSum);
+
+	printf("\ndelta: %f P:%f I:%f ", delta, result, iSum);
 
 	result += iSum;
 
@@ -202,17 +200,18 @@ void updatePID(float temperature) {
 	else {
 		diffTemperature = temperature - diffBuffer[diffbufIDX];
 		PIDdiff = diffTemperature * userSettings.PIDd;
-		ESP_LOGI(TAG, "D: %1.1f \n", PIDdiff);
+
 		if (userSettings.heatingOn)
 			result -= PIDdiff;
 		else
 			result += PIDdiff;
 	}
 	if (userSettings.heatingOn) {
-		if (!wasOn && result > 0) {
+		if ((!wasOn) && (result > 0)) {
 			wasOn = true;
 			iSum = userSettings.PWMstartVal;
 			result = userSettings.PWMstartVal;
+			ESP_LOGI(TAG, "Wason = true");
 		}
 	}
 

@@ -36,11 +36,13 @@ const userSettings_t userSettingsDefaults = {{"Thermostaat"},
 											 30,	// PIDd
 											 40,	// PIDmaxi
 											 30, 	// PID dtime	
-											 30,	// PWMstartVal
+											 40,	// PWMstartVal
+											 0.1, 	// setpointOffset
 											 true,	// heatingOn
 											 true,	// coolingOn
 											 false, // isCalibrated
-											 50,	// backLight
+											 40,	// backLight
+											 {0,0,0,0,0,0,0,0,0,0},// spare
 											 USERSETTINGS_CHECKSTR};
 
 systemInfo_t systemInfo;
@@ -114,7 +116,11 @@ esp_err_t loadSettings() {
 						userSettings.PIDi = oldUserSettings.PIDi;
 						userSettings.PIDmaxi = oldUserSettings.PIDmaxi;
 						userSettings.RHoffset = oldUserSettings.RHoffset;
-						userSettings.temperatureOffset = oldUserSettings.temperatureOffset;
+						if ( oldUserSettings.temperatureOffset < 4)
+							userSettings.temperatureOffset = 4;
+						else
+							userSettings.temperatureOffset = oldUserSettings.temperatureOffset;
+						userSettings.setpointOffset = userSettingsDefaults.setpointOffset;
 						userSettings.temperatureSetpoint = oldUserSettings.temperatureSetpoint;
 						strcpy(userSettings.checkstr, USERSETTINGS_CHECKSTR);
 						doSave = true;

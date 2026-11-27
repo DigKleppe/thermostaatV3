@@ -51,10 +51,12 @@ typedef struct {
 	float PIDmaxi;
 	int PIDdTime;
 	int PWMstartVal;
+	float setpointOffset; 
 	bool heatingOn;
 	bool coolingOn;
 	bool isCalibrated;
 	float backLight;
+	int spare[10];
 	char checkstr[MAX_STRLEN+1];
 }userSettings_t;
 
