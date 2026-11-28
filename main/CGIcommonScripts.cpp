@@ -30,13 +30,14 @@ const CGIdesc_t writeVarDescriptorTable[] = {
 };
 
 const CGIdesc_t advancedWriteVarDescriptorTable[] = {
-	{"Temperatuur offset", &userSettings.temperatureOffset, FLT, 1},
+	{"Temperatuuroffset", &userSettings.temperatureOffset, FLT, 1},
+	{"Instellingoffset", &userSettings.setpointOffset, FLT, 1},
 	{"RH offset", &userSettings.RHoffset, FLT, 1},
 	{"PID P", &userSettings.PIDp, FLT, 1},
 	{"PID I", &userSettings.PIDi, FLT, 1},
 	{"PID D", &userSettings.PIDd, FLT, 1},
 	{"PID max I", &userSettings.PIDmaxi, FLT, 1},
-	{"PID dTime", &userSettings.PIDdTime, INT, 1},
+	{"PID dTijd", &userSettings.PIDdTime, INT, 1},
 	{"PWM startwaarde", &userSettings.PWMstartVal, INT, 1},
 	{"Laaste IPdigit",&advSettings.fixedIPdigit, INT, 1}, 
 	{NULL, NULL, INT, 1},
